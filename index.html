@@ -1,27 +1,38 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Nova 智能助手 </title>
+    <title>AI Nova 智能助手 - 张兆华工作室</title>
 
     <!-- 引入 Markdown 解析库与 FontAwesome 图标库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
+        /* --- 全局 CSS 变量 (白天/夜间模式) --- */
         :root {
             --primary: #685cff;
-            --primary-gradient: linear-gradient(90deg, #685cff, #c43cff);
+            --primary-gradient: linear-gradient(135deg, #685cff, #c43cff);
             --bg-main: #f8f9ff;
-            --white: #ffffff;
+            --bg-card: #ffffff;
             --text-main: #2c3e50;
             --text-sub: #7f8c8d;
             --border: #e2e8f0;
-            --user-bg: #685cff;
-            --ai-bg: #ffffff;
+            --input-bg: #ffffff;
             --sidebar-width: 280px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #121212;
+            --bg-card: #1e1e2d;
+            --text-main: #e2e8f0;
+            --text-sub: #a0aec0;
+            --border: #2d3748;
+            --input-bg: #1a1a27;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -31,22 +42,26 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
-            height: 100vh;
+        html, body {
+            width: 100%;
+            height: 100%;
             height: 100dvh;
-            background: radial-gradient(circle at top, #ebdfff 0%, transparent 40%), linear-gradient(180deg, #ffffff 0%, var(--bg-main) 100%);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-main);
             color: var(--text-main);
-            display: flex;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
             overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- 侧边栏 (历史会话) --- */
+        body {
+            display: flex;
+        }
+
+        /* --- 1. 左侧抽屉式历史会话 --- */
         .sidebar {
             width: var(--sidebar-width);
             height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
+            background: var(--bg-card);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
@@ -55,7 +70,7 @@
             top: 0;
             z-index: 100;
             transform: translateX(-100%);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sidebar.open {
@@ -74,25 +89,24 @@
 
         .sidebar-header {
             padding: 20px;
-            display: flex;
-            gap: 10px;
             border-bottom: 1px solid var(--border);
         }
 
         .btn-new-chat {
-            flex: 1;
-            padding: 10px 15px;
-            border-radius: 20px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 24px;
             border: 1px solid var(--primary);
-            background: white;
+            background: transparent;
             color: var(--primary);
             font-weight: bold;
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
 
         .btn-new-chat:hover {
@@ -115,11 +129,12 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            color: var(--text-main);
             transition: background 0.2s;
         }
 
         .history-item:hover, .history-item.active {
-            background: #ede9fe;
+            background: rgba(104, 92, 255, 0.1);
             color: var(--primary);
         }
 
@@ -140,33 +155,54 @@
             opacity: 1;
         }
 
+        /* 侧边栏底部（含白天/夜间模式切换） */
         .sidebar-footer {
-            padding: 15px;
+            padding: 15px 20px;
             border-top: 1px solid var(--border);
-            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
             color: var(--text-sub);
-            text-align: center;
         }
 
-        /* --- 主聊天界面 --- */
+        .theme-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            transition: 0.2s;
+        }
+
+        .theme-toggle-btn:hover {
+            color: var(--primary);
+        }
+
+        /* --- 2. 主页面布局 --- */
         .main-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             height: 100%;
             position: relative;
+            overflow: hidden;
         }
 
-        /* 顶部导航 */
         .header {
-            height: 60px;
+            height: 55px;
             padding: 0 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            background: rgba(255,255,255,0.6);
-            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card);
+            flex-shrink: 0;
+            z-index: 10;
         }
 
         .header-left {
@@ -176,29 +212,23 @@
         }
 
         .toggle-btn {
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
-            color: #555;
+            color: var(--text-main);
         }
 
         .logo {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             color: transparent;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
         .icon-btn {
             cursor: pointer;
             font-size: 18px;
-            color: #666;
+            color: var(--text-sub);
             transition: 0.2s;
         }
 
@@ -206,31 +236,33 @@
             color: var(--primary);
         }
 
-        /* 对话展示区域 */
+        /* 对话区 */
         .chat-area {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 20px 15px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            max-width: 900px;
             width: 100%;
+            max-width: 850px;
             margin: 0 auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Google/Baidu 式欢迎页 */
+        /* 居中 Hero 搜索引擎样式 */
         .welcome-hero {
             margin: auto 0;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            padding: 20px 0;
         }
 
         .welcome-hero h1 {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -239,14 +271,14 @@
 
         .welcome-hero p {
             color: var(--text-sub);
-            font-size: 16px;
+            font-size: 15px;
         }
 
         /* 消息气泡 */
         .message {
             display: flex;
             gap: 12px;
-            max-width: 85%;
+            max-width: 90%;
         }
 
         .message.user {
@@ -258,7 +290,6 @@
             align-self: flex-start;
         }
 
-        /* 头像（预留GitHub与相对路径） */
         .avatar {
             width: 36px;
             height: 36px;
@@ -266,16 +297,15 @@
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
         .bubble {
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-radius: 18px;
             font-size: 15px;
             line-height: 1.6;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             word-break: break-word;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .message.user .bubble {
@@ -285,105 +315,48 @@
         }
 
         .message.ai .bubble {
-            background: var(--ai-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text-main);
             border-bottom-left-radius: 4px;
         }
 
         .bubble code {
-            background: rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.06);
             padding: 2px 5px;
             border-radius: 4px;
             font-family: monospace;
-        }
-
-        .bubble pre {
-            background: #282c34;
-            color: #abb2bf;
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 10px 0;
-        }
-
-        .msg-actions {
-            margin-top: 5px;
-            font-size: 12px;
-            color: var(--text-sub);
-            display: flex;
-            gap: 10px;
-        }
-
-        .act-btn {
-            cursor: pointer;
-        }
-
-        .act-btn:hover {
-            color: var(--primary);
-        }
-
-        /* --- 底部控制面板与 5 种 Agent 模式切换 --- */
-        .input-container {
-            padding: 15px 20px;
-            max-width: 900px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        /* 5种 Agent 智能体模式卡片/标签栏 */
-        .agent-modes {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none; /* Firefox */
-        }
-
-        .agent-modes::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
-        }
-
-        .mode-chip {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: white;
-            border: 1px solid var(--border);
             font-size: 13px;
-            color: var(--text-sub);
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s;
+        }
+
+        /* --- 3. 居中/底部固定容器 (输入框 + 5模式按钮) --- */
+        .input-container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 10px 15px 20px 15px;
+            background: transparent;
             display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
         }
 
-        .mode-chip.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 12px rgba(104, 92, 255, 0.3);
-        }
-
-        /* 类 Google/Baidu 大牌搜索引擎大圆角输入框 */
+        /* Google/Baidu 大圆角输入框 */
         .input-box-wrapper {
-            background: white;
+            background: var(--input-bg);
             border-radius: 28px;
             border: 1px solid var(--border);
-            padding: 8px 18px;
+            padding: 8px 16px;
             display: flex;
             align-items: flex-end;
             gap: 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-            transition: border 0.2s, box-shadow 0.2s;
+            box-shadow: var(--shadow);
+            transition: border-color 0.2s;
         }
 
         .input-box-wrapper:focus-within {
             border-color: var(--primary);
-            box-shadow: 0 8px 28px rgba(104, 92, 255, 0.15);
         }
 
         textarea.chat-input {
@@ -394,15 +367,16 @@
             padding: 8px 0;
             max-height: 120px;
             min-height: 24px;
-            font-size: 15px;
+            font-size: 16px; /* 16px 防止 iOS 自动强行放大 */
             font-family: inherit;
             line-height: 1.5;
             background: transparent;
+            color: var(--text-main);
         }
 
         .send-btn {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: var(--primary-gradient);
             color: white;
@@ -411,21 +385,60 @@
             justify-content: center;
             cursor: pointer;
             flex-shrink: 0;
-            transition: transform 0.2s;
+            margin-bottom: 2px;
         }
 
-        .send-btn:hover {
-            transform: scale(1.05);
+        /* 5 种 Agent 模式切换按钮 (放置在输入框下方，且两边对齐) */
+        .agent-modes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
         }
 
-        /* 遮罩层 (移动端) */
+        .mode-chip {
+            flex: 1;
+            padding: 8px 0;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 480px) {
+            .mode-chip {
+                font-size: 11px;
+                padding: 6px 0;
+            }
+            .mode-chip i {
+                display: none; /* 极小屏下隐藏图标保证文字对齐 */
+            }
+        }
+
+        .mode-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* 遮罩层 */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.4);
             z-index: 90;
             display: none;
         }
@@ -434,7 +447,7 @@
             display: block;
         }
 
-        /* 极简设置弹窗 */
+        /* --- 5. 授权码弹窗 (带关闭按钮，无手机号) --- */
         .modal {
             display: none;
             position: fixed;
@@ -446,44 +459,67 @@
             z-index: 200;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
         .modal-content {
-            background: white;
+            background: var(--bg-card);
             padding: 25px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 450px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-sub);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin: 18px 0;
         }
 
         .form-group label {
             display: block;
             font-size: 13px;
             color: var(--text-sub);
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             outline: none;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 15px;
         }
 
         .btn-submit {
             width: 100%;
             padding: 12px;
-            background: var(--primary);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        .auth-tip {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: none;
         }
     </style>
 </head>
@@ -493,23 +529,24 @@
     <!-- 移动端侧边栏遮罩 -->
     <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-    <!-- 1. 左侧历史对话抽屉（代码本地存储逻辑保留） -->
+    <!-- 1 & 4. 左侧抽屉历史记录 + 夜间/白天模式切换 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <button class="btn-new-chat" onclick="startNewChat()">
                 <i class="fas fa-plus"></i> 开启新对话
             </button>
         </div>
-        <div class="history-list" id="history-list">
-            <!-- 动态渲染历史记录 -->
-        </div>
+        <div class="history-list" id="history-list"></div>
         <div class="sidebar-footer">
-            <p style="cursor: pointer;" onclick="clearAllCache()"><i class="fas fa-trash-alt"></i> 清空本地历史缓存</p>
-            <p style="margin-top: 5px;">张兆华工作室 © 2025</p>
+            <div class="theme-toggle-btn" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+                <span id="theme-text">夜间模式</span>
+            </div>
+            <i class="fas fa-trash-alt" title="清空缓存" style="cursor:pointer;" onclick="clearAllCache()"></i>
         </div>
     </div>
 
-    <!-- 2. 主页面区域 -->
+    <!-- 2. 主界面 -->
     <div class="main-container">
         <!-- 顶栏 -->
         <div class="header">
@@ -518,22 +555,30 @@
                 <div class="logo">AI Nova</div>
             </div>
             <div class="header-actions">
-                <i class="fas fa-cog icon-btn" title="API与个人设置" onclick="openModal('settings-modal')"></i>
+                <i class="fas fa-key icon-btn" title="输入授权码" onclick="openModal('settings-modal')"></i>
             </div>
         </div>
 
-        <!-- 聊天信息展示区 / 搜索引擎式首页 -->
+        <!-- 对话展示区（屏幕居中/自然下滑） -->
         <div class="chat-area" id="chat-box">
             <div class="welcome-hero" id="welcome-hero">
                 <h1>让 AI 创造更多可能</h1>
-                <p>基于先进智能体网络，支持多场景问答、创作与分析</p>
+                <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
             </div>
         </div>
 
-        <!-- 3. 底部控制区（包含5种Agent模式切换与搜索框） -->
+        <!-- 3. 居中/底部固定区：输入框 + 5模式两边对齐切换按钮 -->
         <div class="input-container">
-            <!-- 智能体模式切换（预留5种模式选项） -->
-            <div class="agent-modes" id="agent-modes">
+            <!-- 输入框 -->
+            <div class="input-box-wrapper">
+                <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
+                <div class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+            </div>
+
+            <!-- 5 种 Agent 模式切换 (位于输入框下方且两边对齐) -->
+            <div class="agent-modes">
                 <div class="mode-chip active" data-mode="supervisor" onclick="switchAgentMode('supervisor', this)">
                     <i class="fas fa-user-graduate"></i> 个案督导
                 </div>
@@ -550,55 +595,43 @@
                     <i class="fas fa-sparkles"></i> 自由创作
                 </div>
             </div>
-
-            <!-- 输入框（参考 Google/Baidu 极简风格） -->
-            <div class="input-box-wrapper">
-                <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
-                <div class="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- 4. 配置弹窗 (预留 API 设置) -->
+    <!-- 5. 精简授权码弹窗（带关闭按钮，无手机号） -->
     <div class="modal" id="settings-modal">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px;">⚙️ 节点与系统配置</h3>
+            <span class="close-modal" onclick="closeModal('settings-modal')">&times;</span>
+            <h3 style="margin-bottom: 5px;">🔑 身份授权</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">请输入您的 VIP 授权码以解锁所有 AI 模型服务</p>
             <div class="form-group">
                 <label>授权码 (Auth Code)</label>
-                <input type="text" id="auth_code" class="form-control" placeholder="请输入您的 VIP 授权码">
+                <input type="text" id="auth_code" class="form-control" placeholder="请输入您的授权码">
+                <div class="auth-tip" id="auth-tip">⚠️ 请先输入有效的授权码才能继续使用！</div>
             </div>
-            <div class="form-group">
-                <label>绑定账号 / 手机号</label>
-                <input type="text" id="phone_number" class="form-control" placeholder="请输入您的手机号/QQ">
-            </div>
-            <button class="btn-submit" onclick="saveConfig()">保存设置</button>
+            <button class="btn-submit" onclick="saveConfig()">保存并体验</button>
         </div>
     </div>
 
-    <!-- JavaScript 核心业务逻辑 -->
+    <!-- JavaScript 脚本 -->
     <script>
-        /* ================= 5 & 6. 预留 API 接口配置与 GitHub 部署头像路径 ================= */
+        /* 预留 API 接口配置与 GitHub 头像路径 */
         const CONFIG = {
-            WORKER_URL: 'https://dudao.huaged.com', // 预留 Dify Worker / Cloudflare 接口
-            LOG_URL: 'https://script.google.com/macros/s/AKfycbzPdO5TOYdeKS2W6ZOo5J4rihcYsjyLr3myFK_t0pV6GQp8x-TOMPcIZh_1GqMrSMZo/exec', // 预留 Google Sheet 接口
-            
-            // 预留头像路径（部署到 GitHub 时可将头像放至项目同级根目录下）
-            AI_AVATAR: './avatar.png',   // AI 头像相对路径
-            USER_AVATAR: './user.png'    // 用户头像相对路径
+            WORKER_URL: 'https://dudao.huaged.com', // 预留 Dify Proxy / Worker 接口
+            LOG_URL: 'https://script.google.com/macros/s/AKfycbzPdO5TOYdeKS2W6ZOo5J4rihcYsjyLr3myFK_t0pV6GQp8x-TOMPcIZh_1GqMrSMZo/exec', // Google Sheet 接口
+            AI_AVATAR: './avatar.png',   // GitHub 头像相对路径
+            USER_AVATAR: './user.png'
         };
 
         let currentConvId = "";
-        let currentMode = "supervisor"; // 默认 Agent 模式
+        let currentMode = "supervisor";
         let chatList = JSON.parse(localStorage.getItem('nova_chat_list')) || [];
 
-        // 初始化加载
         document.addEventListener('DOMContentLoaded', () => {
             loadConfig();
             renderHistory();
-            
-            // 绑定键盘 Enter 发送逻辑
+            initTheme();
+
             document.getElementById('user_input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
                     e.preventDefault();
@@ -607,7 +640,34 @@
             });
         });
 
-        /* ================= 侧边栏及历史会话管理 (本地存储) ================= */
+        /* --- 4. 夜间/白天模式切换逻辑 --- */
+        function initTheme() {
+            const savedTheme = localStorage.getItem('nova_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeUI(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('nova_theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+                text.innerText = '白天模式';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.innerText = '夜间模式';
+            }
+        }
+
+        /* --- 侧边栏与历史记录管理 --- */
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
@@ -624,7 +684,6 @@
                 <div class="history-item ${item.id === currentConvId ? 'active' : ''}" onclick="loadChat('${item.id}')">
                     <span class="history-title">${item.title}</span>
                     <div class="history-actions">
-                        <i class="fas fa-pen" onclick="renameChat('${item.id}', event)"></i>
                         <i class="fas fa-trash" onclick="deleteChat('${item.id}', event)"></i>
                     </div>
                 </div>
@@ -636,7 +695,7 @@
             document.getElementById('chat-box').innerHTML = `
                 <div class="welcome-hero" id="welcome-hero">
                     <h1>让 AI 创造更多可能</h1>
-                    <p>基于先进智能体网络，支持多场景问答、创作与分析</p>
+                    <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
                 </div>`;
             closeSidebar();
             renderHistory();
@@ -648,13 +707,14 @@
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
-            msgs.forEach(m => appendMessage(m.role, m.content, m.msgId));
+            msgs.forEach(m => appendMessage(m.role, m.content));
+            scrollToBottom();
             renderHistory();
         }
 
-        function saveMsg(id, role, content, msgId) {
+        function saveMsg(id, role, content) {
             let msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
-            msgs.push({ role, content, msgId });
+            msgs.push({ role, content });
             localStorage.setItem(`nova_msg_${id}`, JSON.stringify(msgs));
         }
 
@@ -677,79 +737,61 @@
             if (currentConvId === id) startNewChat();
         }
 
-        function renameChat(id, e) {
-            e.stopPropagation();
-            const newName = prompt("重命名会话：");
-            if (newName) {
-                const item = chatList.find(c => c.id === id);
-                if (item) {
-                    item.title = newName;
-                    localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
-                    renderHistory();
-                }
-            }
-        }
-
-        function clearAllCache() {
-            if (confirm("确定清空本地所有历史记录与配置？")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        /* ================= 3. 智能体 Agent 模式切换逻辑 ================= */
+        /* --- 3. 5 种 Agent 模式切换 --- */
         function switchAgentMode(modeKey, el) {
             currentMode = modeKey;
             document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active'));
             el.classList.add('active');
             
-            // 提示占位符调整
             const input = document.getElementById('user_input');
             const placeholders = {
                 supervisor: '输入心理咨询案例或督导需求...',
-                simulation: '开始扮演来访者，请输入您的第一句话...',
-                business: '请提出您在创业获客、变现中的难题...',
-                science: '请输入想检索的心理学知识概念...',
+                simulation: '扮演来访者，请输入第一句话...',
+                business: '提出创业获客或变现问题...',
+                science: '检索心理学知识或概念...',
                 free: '发送消息给 AI Nova...'
             };
             input.placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* ================= 消息交互与 API 传输逻辑 ================= */
+        /* --- 6. 授权码验证提醒与 7&8. 消息发送/滚动/手机收起键盘 --- */
         async function sendMessage() {
             const input = document.getElementById('user_input');
             const text = input.value.trim();
             if (!text) return;
 
-            // 移除欢迎界面
-            const hero = document.getElementById('welcome-hero');
-            if (hero) hero.remove();
+            // 6. 验证授权码，若未填写则弹窗提醒引导
+            const auth = localStorage.getItem('nova_auth');
+            if (!auth) {
+                document.getElementById('auth-tip').style.display = 'block';
+                openModal('settings-modal');
+                return;
+            }
 
-            // 渲染用户输入
-            appendMessage('user', text);
+            // 8. 手机端发送后：软键盘自动收起，输入框恢复默认高度
+            input.blur();
             input.value = '';
             input.style.height = 'auto';
 
-            const auth = localStorage.getItem('nova_auth') || '';
-            const phone = localStorage.getItem('nova_phone') || '';
+            // 移除居中 Hero
+            const hero = document.getElementById('welcome-hero');
+            if (hero) hero.remove();
 
-            // 预留 Dify API 交互 Payload 结构
-            const payload = {
-                "inputs": {
-                    "task_mode": currentMode,
-                    "auth_code": auth,
-                    "phone_number": phone
-                },
-                "query": text,
-                "response_mode": "blocking",
-                "conversation_id": currentConvId,
-                "user": phone || "anonymous_user"
-            };
+            // 渲染用户消息
+            appendMessage('user', text);
+            scrollToBottom();
 
             const loadingId = appendThinking();
 
             try {
-                // 链接 Dify / Cloudflare 节点网络
+                const payload = {
+                    "inputs": { "task_mode": currentMode, "auth_code": auth },
+                    "query": text,
+                    "response_mode": "blocking",
+                    "conversation_id": currentConvId,
+                    "user": "user_" + auth.substring(0, 6)
+                };
+
                 const response = await fetch(CONFIG.WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -758,36 +800,35 @@
 
                 removeThinking(loadingId);
 
-                if (!response.ok) throw new Error("服务器响应异常");
+                if (!response.ok) throw new Error("接口响应失败");
 
                 const data = await response.json();
-                const aiReply = data.answer || "已收到您的消息，但未返回有效内容。";
+                const aiReply = data.answer || "已收到，但模型未给出有效答复。";
 
-                appendMessage('ai', aiReply, data.message_id);
+                appendMessage('ai', aiReply);
+                
+                // 7. 对话自然下滑查阅
+                scrollToBottom();
 
-                // 更新会话 ID 与本地持久化
                 if (currentConvId !== data.conversation_id) {
                     currentConvId = data.conversation_id || 'conv_' + Date.now();
                     updateChatList(currentConvId, text);
                 }
                 saveMsg(currentConvId, 'user', text);
-                saveMsg(currentConvId, 'ai', aiReply, data.message_id);
-
-                // 预留 Google Sheet 异步数据追踪逻辑
-                logToGoogleSheet({ action: 'chat', mode: currentMode, query: text, answer: aiReply });
+                saveMsg(currentConvId, 'ai', aiReply);
 
             } catch (err) {
                 removeThinking(loadingId);
-                appendMessage('ai', `❌ 传输失败：${err.message} （请检查 API 节点配置）`);
+                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或 API 网络)`);
+                scrollToBottom();
             }
         }
 
-        function appendMessage(role, text, msgId = null) {
+        function appendMessage(role, text) {
             const box = document.getElementById('chat-box');
             const div = document.createElement('div');
             div.className = `message ${role}`;
 
-            // 根据 GitHub 相对路径预留设置头像
             const avatarUrl = role === 'ai' ? CONFIG.AI_AVATAR : CONFIG.USER_AVATAR;
             const avatarHtml = `<div class="avatar" style="background-image: url('${avatarUrl}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>`;
 
@@ -798,7 +839,6 @@
                 </div>`;
 
             box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
         }
 
         function appendThinking() {
@@ -811,7 +851,7 @@
                 <div class="avatar" style="background-image: url('${CONFIG.AI_AVATAR}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>
                 <div class="bubble"><i class="fas fa-spinner fa-spin"></i> 思考中...</div>`;
             box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
+            scrollToBottom();
             return id;
         }
 
@@ -820,36 +860,45 @@
             if (el) el.remove();
         }
 
+        // 7. 对话下滑滚动函数
+        function scrollToBottom() {
+            const box = document.getElementById('chat-box');
+            box.scrollTo({
+                top: box.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
         function autoResize(el) {
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
         }
 
-        /* ================= 预留 API / Sheet 追踪接口 ================= */
-        function logToGoogleSheet(data) {
-            if (!CONFIG.LOG_URL) return;
-            fetch(CONFIG.LOG_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).catch(e => console.error("Google Log 错误:", e));
-        }
-
-        /* ================= 配置模态框 ================= */
+        /* --- 弹窗逻辑 --- */
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function saveConfig() {
-            localStorage.setItem('nova_auth', document.getElementById('auth_code').value.trim());
-            localStorage.setItem('nova_phone', document.getElementById('phone_number').value.trim());
+            const auth = document.getElementById('auth_code').value.trim();
+            if (!auth) {
+                document.getElementById('auth-tip').style.display = 'block';
+                return;
+            }
+            localStorage.setItem('nova_auth', auth);
+            document.getElementById('auth-tip').style.display = 'none';
             closeModal('settings-modal');
-            alert("配置保存成功！");
         }
 
         function loadConfig() {
-            if (localStorage.getItem('nova_auth')) document.getElementById('auth_code').value = localStorage.getItem('nova_auth');
-            if (localStorage.getItem('nova_phone')) document.getElementById('phone_number').value = localStorage.getItem('nova_phone');
+            const auth = localStorage.getItem('nova_auth');
+            if (auth) document.getElementById('auth_code').value = auth;
+        }
+
+        function clearAllCache() {
+            if (confirm("确定要清空本地所有聊天记录？")) {
+                localStorage.clear();
+                location.reload();
+            }
         }
     </script>
 </body>
