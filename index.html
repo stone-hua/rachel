@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Nova 智能助手 - 张兆华工作室</title>
+    <title>AI Nova 智能助手 - 瑞秋工作室</title>
 
     <!-- 引入 Markdown 解析库与 FontAwesome 图标库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -155,15 +155,19 @@
             opacity: 1;
         }
 
-        /* 侧边栏底部（含白天/夜间模式切换） */
+        /* 侧边栏底部 (包含夜间模式 + 瑞秋工作室版权信息) */
         .sidebar-footer {
-            padding: 15px 20px;
+            padding: 15px;
             border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
-            color: var(--text-sub);
         }
 
         .theme-toggle-btn {
@@ -176,11 +180,25 @@
             background: var(--bg-main);
             border: 1px solid var(--border);
             color: var(--text-main);
+            font-size: 12px;
             transition: 0.2s;
         }
 
         .theme-toggle-btn:hover {
             color: var(--primary);
+        }
+
+        .studio-brand-info {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            border-top: 1px dashed var(--border);
+            padding-top: 10px;
+        }
+
+        .studio-brand-info span {
+            display: block;
+            font-weight: 500;
         }
 
         /* --- 2. 主页面布局 --- */
@@ -225,18 +243,27 @@
             color: transparent;
         }
 
-        .icon-btn {
+        .header-actions {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .icon-btn-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
             cursor: pointer;
-            font-size: 18px;
             color: var(--text-sub);
+            font-size: 14px;
             transition: 0.2s;
         }
 
-        .icon-btn:hover {
+        .icon-btn-wrapper:hover {
             color: var(--primary);
         }
 
-        /* 对话区 */
+        /* 对话区：支持类似 Gemini / ChatGPT 的电脑端首页居中样式 */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -248,9 +275,10 @@
             max-width: 850px;
             margin: 0 auto;
             -webkit-overflow-scrolling: touch;
+            transition: all 0.3s ease;
         }
 
-        /* 居中 Hero 搜索引擎样式 */
+        /* 初始居中 Hero */
         .welcome-hero {
             margin: auto 0;
             text-align: center;
@@ -321,15 +349,7 @@
             border-bottom-left-radius: 4px;
         }
 
-        .bubble code {
-            background: rgba(0,0,0,0.06);
-            padding: 2px 5px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 13px;
-        }
-
-        /* --- 3. 居中/底部固定容器 (输入框 + 5模式按钮) --- */
+        /* --- 3. 底部固定容器 (输入框 + 5模式按钮) --- */
         .input-container {
             width: 100%;
             max-width: 850px;
@@ -342,7 +362,7 @@
             flex-shrink: 0;
         }
 
-        /* Google/Baidu 大圆角输入框 */
+        /* 大圆角搜索引擎式输入框 */
         .input-box-wrapper {
             background: var(--input-bg);
             border-radius: 28px;
@@ -367,7 +387,7 @@
             padding: 8px 0;
             max-height: 120px;
             min-height: 24px;
-            font-size: 16px; /* 16px 防止 iOS 自动强行放大 */
+            font-size: 16px;
             font-family: inherit;
             line-height: 1.5;
             background: transparent;
@@ -388,7 +408,7 @@
             margin-bottom: 2px;
         }
 
-        /* 5 种 Agent 模式切换按钮 (放置在输入框下方，且两边对齐) */
+        /* 5 种 Agent 模式 (两边对齐) */
         .agent-modes {
             display: flex;
             justify-content: space-between;
@@ -420,7 +440,7 @@
                 padding: 6px 0;
             }
             .mode-chip i {
-                display: none; /* 极小屏下隐藏图标保证文字对齐 */
+                display: none;
             }
         }
 
@@ -447,7 +467,7 @@
             display: block;
         }
 
-        /* --- 5. 授权码弹窗 (带关闭按钮，无手机号) --- */
+        /* 弹窗通用样式 */
         .modal {
             display: none;
             position: fixed;
@@ -467,7 +487,7 @@
             padding: 25px;
             border-radius: 20px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             position: relative;
             box-shadow: var(--shadow);
         }
@@ -482,25 +502,25 @@
         }
 
         .form-group {
-            margin: 18px 0;
+            margin: 15px 0;
         }
 
         .form-group label {
             display: block;
             font-size: 13px;
             color: var(--text-sub);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px;
+            padding: 10px 12px;
             border: 1px solid var(--border);
             border-radius: 10px;
             outline: none;
             background: var(--input-bg);
             color: var(--text-main);
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .btn-submit {
@@ -513,6 +533,7 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 10px;
         }
 
         .auth-tip {
@@ -526,10 +547,9 @@
 
 <body>
 
-    <!-- 移动端侧边栏遮罩 -->
     <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-    <!-- 1 & 4. 左侧抽屉历史记录 + 夜间/白天模式切换 -->
+    <!-- 1. 左侧抽屉历史记录 + 夜间模式 + 瑞秋工作室出品标记 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <button class="btn-new-chat" onclick="startNewChat()">
@@ -538,11 +558,19 @@
         </div>
         <div class="history-list" id="history-list"></div>
         <div class="sidebar-footer">
-            <div class="theme-toggle-btn" onclick="toggleTheme()">
-                <i class="fas fa-moon" id="theme-icon"></i>
-                <span id="theme-text">夜间模式</span>
+            <div class="footer-row">
+                <div class="theme-toggle-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">夜间模式</span>
+                </div>
+                <i class="fas fa-trash-alt" title="清空缓存" style="cursor:pointer; color: var(--text-sub);" onclick="clearAllCache()"></i>
             </div>
-            <i class="fas fa-trash-alt" title="清空缓存" style="cursor:pointer;" onclick="clearAllCache()"></i>
+
+            <!-- 要求 2: 左下角工作室落款信息 -->
+            <div class="studio-brand-info">
+                <span>瑞秋工作室出品</span>
+                联系微信 / 咨询： RachelStudio2025
+            </div>
         </div>
     </div>
 
@@ -555,11 +583,18 @@
                 <div class="logo">AI Nova</div>
             </div>
             <div class="header-actions">
-                <i class="fas fa-key icon-btn" title="输入授权码" onclick="openModal('settings-modal')"></i>
+                <!-- 要求 1: 右上角用户个人档案 (我) 按钮 -->
+                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置个人档案/知识库">
+                    <i class="fas fa-user-circle" style="font-size: 18px;"></i>
+                    <span style="font-size: 13px;">我</span>
+                </div>
+                <div class="icon-btn-wrapper" onclick="openModal('settings-modal')" title="输入授权码">
+                    <i class="fas fa-key" style="font-size: 16px;"></i>
+                </div>
             </div>
         </div>
 
-        <!-- 对话展示区（屏幕居中/自然下滑） -->
+        <!-- 对话展示区 (要求 3: 电脑端打开时居中，使用后平滑滑动) -->
         <div class="chat-area" id="chat-box">
             <div class="welcome-hero" id="welcome-hero">
                 <h1>让 AI 创造更多可能</h1>
@@ -567,9 +602,8 @@
             </div>
         </div>
 
-        <!-- 3. 居中/底部固定区：输入框 + 5模式两边对齐切换按钮 -->
+        <!-- 3. 底部固定区：输入框 + 5模式切换 -->
         <div class="input-container">
-            <!-- 输入框 -->
             <div class="input-box-wrapper">
                 <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
                 <div class="send-btn" onclick="sendMessage()">
@@ -577,7 +611,6 @@
                 </div>
             </div>
 
-            <!-- 5 种 Agent 模式切换 (位于输入框下方且两边对齐) -->
             <div class="agent-modes">
                 <div class="mode-chip active" data-mode="supervisor" onclick="switchAgentMode('supervisor', this)">
                     <i class="fas fa-user-graduate"></i> 个案督导
@@ -598,12 +631,38 @@
         </div>
     </div>
 
-    <!-- 5. 精简授权码弹窗（带关闭按钮，无手机号） -->
+    <!-- 要求 1: 用户个人档案/知识库弹窗 -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
+            <h3 style="margin-bottom: 5px;">👤 用户专属档案 (知识库)</h3>
+            <p style="font-size: 12px; color: var(--text-sub);">完善您的个人背景，AI 智能体将为您提供更精准的定制化回答（选填，不填则默认）。</p>
+            <div class="form-group">
+                <label>您的称呼 / 姓名</label>
+                <input type="text" id="user_name" class="form-control" placeholder="例如：张咨询师 / Rachel">
+            </div>
+            <div class="form-group">
+                <label>从业年限 / 背景</label>
+                <input type="text" id="user_years" class="form-control" placeholder="例如：从业3年 / 心理学爱好者">
+            </div>
+            <div class="form-group">
+                <label>主修/偏好流派</label>
+                <input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 人本主义">
+            </div>
+            <div class="form-group">
+                <label>补充偏好说明</label>
+                <textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨、多结合案例分析..."></textarea>
+            </div>
+            <button class="btn-submit" onclick="saveUserProfile()">保存档案</button>
+        </div>
+    </div>
+
+    <!-- 授权码弹窗 -->
     <div class="modal" id="settings-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('settings-modal')">&times;</span>
             <h3 style="margin-bottom: 5px;">🔑 身份授权</h3>
-            <p style="font-size: 13px; color: var(--text-sub);">请输入您的 VIP 授权码以解锁所有 AI 模型服务</p>
+            <p style="font-size: 13px; color: var(--text-sub);">请输入您的 VIP 授权码以解锁所有 AI 服务</p>
             <div class="form-group">
                 <label>授权码 (Auth Code)</label>
                 <input type="text" id="auth_code" class="form-control" placeholder="请输入您的授权码">
@@ -615,7 +674,6 @@
 
     <!-- JavaScript 脚本 -->
     <script>
-        /* 预留 API 接口配置与 GitHub 头像路径 */
         const CONFIG = {
             WORKER_URL: 'https://dudao.huaged.com', // 预留 Dify Proxy / Worker 接口
             LOG_URL: 'https://script.google.com/macros/s/AKfycbzPdO5TOYdeKS2W6ZOo5J4rihcYsjyLr3myFK_t0pV6GQp8x-TOMPcIZh_1GqMrSMZo/exec', // Google Sheet 接口
@@ -629,6 +687,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadConfig();
+            loadUserProfile();
             renderHistory();
             initTheme();
 
@@ -640,7 +699,7 @@
             });
         });
 
-        /* --- 4. 夜间/白天模式切换逻辑 --- */
+        /* --- 夜间/白天模式 --- */
         function initTheme() {
             const savedTheme = localStorage.getItem('nova_theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -667,7 +726,30 @@
             }
         }
 
-        /* --- 侧边栏与历史记录管理 --- */
+        /* --- 要求 1: 保存与读取用户专属档案 --- */
+        function saveUserProfile() {
+            const profile = {
+                name: document.getElementById('user_name').value.trim(),
+                years: document.getElementById('user_years').value.trim(),
+                school: document.getElementById('user_school').value.trim(),
+                notes: document.getElementById('user_notes').value.trim()
+            };
+            localStorage.setItem('nova_user_profile', JSON.stringify(profile));
+            closeModal('profile-modal');
+            alert("个人档案更新成功！智能体将自动适配您的个性化背景。");
+        }
+
+        function loadUserProfile() {
+            const profile = JSON.parse(localStorage.getItem('nova_user_profile'));
+            if (profile) {
+                document.getElementById('user_name').value = profile.name || '';
+                document.getElementById('user_years').value = profile.years || '';
+                document.getElementById('user_school').value = profile.school || '';
+                document.getElementById('user_notes').value = profile.notes || '';
+            }
+        }
+
+        /* --- 抽屉与历史记录管理 --- */
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
@@ -737,7 +819,7 @@
             if (currentConvId === id) startNewChat();
         }
 
-        /* --- 3. 5 种 Agent 模式切换 --- */
+        /* --- 5 种 Agent 模式切换 --- */
         function switchAgentMode(modeKey, el) {
             currentMode = modeKey;
             document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active'));
@@ -754,13 +836,12 @@
             input.placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* --- 6. 授权码验证提醒与 7&8. 消息发送/滚动/手机收起键盘 --- */
+        /* --- 核心发送逻辑 (透传档案至 Dify + Gemini 风格滑动) --- */
         async function sendMessage() {
             const input = document.getElementById('user_input');
             const text = input.value.trim();
             if (!text) return;
 
-            // 6. 验证授权码，若未填写则弹窗提醒引导
             const auth = localStorage.getItem('nova_auth');
             if (!auth) {
                 document.getElementById('auth-tip').style.display = 'block';
@@ -768,24 +849,33 @@
                 return;
             }
 
-            // 8. 手机端发送后：软键盘自动收起，输入框恢复默认高度
             input.blur();
             input.value = '';
             input.style.height = 'auto';
 
-            // 移除居中 Hero
+            // 移除居中 Hero (从居中态平滑切换到对话态)
             const hero = document.getElementById('welcome-hero');
             if (hero) hero.remove();
 
-            // 渲染用户消息
             appendMessage('user', text);
             scrollToBottom();
+
+            // 读取用户档案，打包传递给 Dify 后端
+            const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
 
             const loadingId = appendThinking();
 
             try {
                 const payload = {
-                    "inputs": { "task_mode": currentMode, "auth_code": auth },
+                    "inputs": {
+                        "task_mode": currentMode,
+                        "auth_code": auth,
+                        // 要求 1: 传给 Dify 的用户专属档案变量
+                        "user_name": userProfile.name || "普通用户",
+                        "user_years": userProfile.years || "未填写",
+                        "user_school": userProfile.school || "通用",
+                        "user_notes": userProfile.notes || ""
+                    },
                     "query": text,
                     "response_mode": "blocking",
                     "conversation_id": currentConvId,
@@ -806,8 +896,6 @@
                 const aiReply = data.answer || "已收到，但模型未给出有效答复。";
 
                 appendMessage('ai', aiReply);
-                
-                // 7. 对话自然下滑查阅
                 scrollToBottom();
 
                 if (currentConvId !== data.conversation_id) {
@@ -860,7 +948,6 @@
             if (el) el.remove();
         }
 
-        // 7. 对话下滑滚动函数
         function scrollToBottom() {
             const box = document.getElementById('chat-box');
             box.scrollTo({
@@ -895,7 +982,7 @@
         }
 
         function clearAllCache() {
-            if (confirm("确定要清空本地所有聊天记录？")) {
+            if (confirm("确定要清空本地所有聊天记录与配置？")) {
                 localStorage.clear();
                 location.reload();
             }
