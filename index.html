@@ -155,7 +155,7 @@
             opacity: 1;
         }
 
-        /* 侧边栏底部 (包含夜间模式 + 瑞秋工作室出品标记) */
+        /* 侧边栏底部 */
         .sidebar-footer {
             padding: 15px;
             border-top: 1px solid var(--border);
@@ -263,7 +263,7 @@
             color: var(--primary);
         }
 
-        /* --- Gemini 风格对话布局 --- */
+        /* --- 对话展示区 --- */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -278,22 +278,17 @@
             transition: all 0.3s ease;
         }
 
-        /* 修复：真正的上下 + 左右双向垂直居中 Hero 标语 */
         .welcome-hero {
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 16px;
-            margin: auto; /* 保证 Flex 内部上下左右完美居中 */
-            max-width: 600px;
-            width: 100%;
-            padding: 20px 0;
+            gap: 12px;
+            padding: 10px 0;
         }
 
         .welcome-hero h1 {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -302,16 +297,7 @@
 
         .welcome-hero p {
             color: var(--text-sub);
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        /* 处于欢迎首页状态时，调整 chat-area 居中容器 */
-        .main-container.welcome-state .chat-area {
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* 垂直居中 */
-            align-items: center;     /* 水平居中 */
+            font-size: 14px;
         }
 
         /* 消息气泡 */
@@ -375,7 +361,18 @@
             transition: all 0.3s ease;
         }
 
-        /* 搜索引擎式圆角输入框 */
+        /* ★★★ 关键修改：当处于 welcome-state 时，将【标语+对话框+按钮】整体在页面中上下上下垂直居中 ★★★ */
+        .main-container.welcome-state .chat-area {
+            flex: 0 0 auto;
+            margin-top: auto; /* 吸收上方剩余空间 */
+            padding-bottom: 10px;
+        }
+
+        .main-container.welcome-state .input-container {
+            margin-bottom: auto; /* 吸收下方剩余空间，形成上下精准垂直居中 */
+        }
+
+        /* 搜索引擎式圆角输入框 (对话框) */
         .input-box-wrapper {
             background: var(--input-bg);
             border-radius: 28px;
@@ -604,7 +601,7 @@
             </div>
         </div>
 
-        <!-- 对话展示区 (上下左右绝对居中 Hero) -->
+        <!-- 对话展示区 -->
         <div class="chat-area" id="chat-box">
             <div class="welcome-hero" id="welcome-hero">
                 <h1>让 AI 创造更多可能</h1>
@@ -612,7 +609,7 @@
             </div>
         </div>
 
-        <!-- 3. 底部固定区：输入框 + 5模式切换 -->
+        <!-- 3. 底部固定/初始居中区：对话框 + 5模式切换 -->
         <div class="input-container">
             <div class="input-box-wrapper">
                 <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
@@ -683,7 +680,7 @@
         </div>
     </div>
 
-    <!-- JavaScript 核心逻辑：完整对接 Dify 与 UI 响应 -->
+    <!-- JavaScript 核心逻辑 -->
     <script>
         const CONFIG = {
             WORKER_URL: 'https://dudao.huaged.com', // Dify Worker / Agency Proxy 接口
@@ -736,7 +733,7 @@
             }
         }
 
-        /* --- 保存与读取 4 项精准用户档案 (传递给 Dify) --- */
+        /* --- 保存与读取 4 项精准用户档案 (透传至 Dify) --- */
         function saveUserProfile() {
             const profile = {
                 years: document.getElementById('user_years').value.trim(),
@@ -785,7 +782,7 @@
         function startNewChat() {
             currentConvId = "";
             const mainContainer = document.getElementById('main-container');
-            mainContainer.classList.add('welcome-state'); // 重新复位开启居中显示
+            mainContainer.classList.add('welcome-state'); // 开启上下居中模式
 
             document.getElementById('chat-box').innerHTML = `
                 <div class="welcome-hero" id="welcome-hero">
@@ -800,7 +797,7 @@
             currentConvId = id;
             closeSidebar();
             
-            // 切换到已有对话时，退出上下居中状态
+            // 切换到已有对话时，退出上下居中状态，对话框恢复在底部
             document.getElementById('main-container').classList.remove('welcome-state');
 
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
@@ -853,7 +850,7 @@
             input.placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* --- 核心发送逻辑：对接 Dify API --- */
+        /* --- 发送逻辑：自动对接 Dify --- */
         async function sendMessage() {
             const input = document.getElementById('user_input');
             const text = input.value.trim();
@@ -866,12 +863,12 @@
                 return;
             }
 
-            // 移动端收起软键盘，重置输入框高度
+            // 移动端自动收起软键盘，输入框高度复位
             input.blur();
             input.value = '';
             input.style.height = 'auto';
 
-            // 退出居中状态，移除居中 Hero
+            // 发送消息后，退出居中状态，对话框沉底
             const mainContainer = document.getElementById('main-container');
             if (mainContainer.classList.contains('welcome-state')) {
                 mainContainer.classList.remove('welcome-state');
@@ -882,13 +879,12 @@
             appendMessage('user', text);
             scrollToBottom();
 
-            // 读取 4 项用户知识库档案
+            // 读取 4 项用户档案传递给 Dify
             const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
 
             const loadingId = appendThinking();
 
             try {
-                // 构造传递给 Dify 智能体 Worker 的完整 Payload 格式
                 const payload = {
                     "inputs": {
                         "task_mode": currentMode,
@@ -912,15 +908,14 @@
 
                 removeThinking(loadingId);
 
-                if (!response.ok) throw new Error("接口网络响应异常");
+                if (!response.ok) throw new Error("接口响应失败");
 
                 const data = await response.json();
-                const aiReply = data.answer || "已收到，但智能体未给出有效答复。";
+                const aiReply = data.answer || "已收到，但模型未给出有效答复。";
 
                 appendMessage('ai', aiReply);
                 scrollToBottom();
 
-                // 更新会话 ID 与历史纪录列表
                 if (data.conversation_id) {
                     const isNew = !currentConvId;
                     currentConvId = data.conversation_id;
@@ -934,7 +929,7 @@
 
             } catch (err) {
                 removeThinking(loadingId);
-                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或 Dify 节点服务状态)`);
+                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或网络状态)`);
                 scrollToBottom();
             }
         }
