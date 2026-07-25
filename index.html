@@ -263,7 +263,7 @@
             color: var(--primary);
         }
 
-        /* --- Gemini 风格居中与对话布局 --- */
+        /* --- Gemini 风格对话布局 --- */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -278,13 +278,17 @@
             transition: all 0.3s ease;
         }
 
-        /* 初始居中 Hero 标语 */
+        /* 修复：真正的上下 + 左右双向垂直居中 Hero 标语 */
         .welcome-hero {
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
+            gap: 16px;
+            margin: auto; /* 保证 Flex 内部上下左右完美居中 */
+            max-width: 600px;
+            width: 100%;
             padding: 20px 0;
         }
 
@@ -299,20 +303,15 @@
         .welcome-hero p {
             color: var(--text-sub);
             font-size: 15px;
+            line-height: 1.6;
         }
 
-        /* Gemini 居中核心样式控制 */
+        /* 处于欢迎首页状态时，调整 chat-area 居中容器 */
         .main-container.welcome-state .chat-area {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            padding-bottom: 10px;
-        }
-
-        .main-container.welcome-state .welcome-hero {
-            margin: auto 0 20px 0;
+            justify-content: center; /* 垂直居中 */
+            align-items: center;     /* 水平居中 */
         }
 
         /* 消息气泡 */
@@ -596,7 +595,6 @@
                 <div class="logo">AI Nova</div>
             </div>
             <div class="header-actions">
-                <!-- 要求 5: 仅保留用户图标，去掉“我”字 -->
                 <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置用户专属档案">
                     <i class="fas fa-user-circle"></i>
                 </div>
@@ -606,7 +604,7 @@
             </div>
         </div>
 
-        <!-- 对话展示区 (要求 1&4: Gemini 居中与平滑移动) -->
+        <!-- 对话展示区 (上下左右绝对居中 Hero) -->
         <div class="chat-area" id="chat-box">
             <div class="welcome-hero" id="welcome-hero">
                 <h1>让 AI 创造更多可能</h1>
@@ -643,7 +641,7 @@
         </div>
     </div>
 
-    <!-- 要求 6: 4项精准用户档案 (知识库) 弹窗 -->
+    <!-- 4项精准用户档案 (知识库) 弹窗 -->
     <div class="modal" id="profile-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
@@ -685,12 +683,11 @@
         </div>
     </div>
 
-    <!-- JavaScript 核心逻辑 -->
+    <!-- JavaScript 核心逻辑：完整对接 Dify 与 UI 响应 -->
     <script>
         const CONFIG = {
-            WORKER_URL: 'https://dudao.huaged.com', // Dify Proxy / Worker 接口
-            LOG_URL: 'https://script.google.com/macros/s/AKfycbzPdO5TOYdeKS2W6ZOo5J4rihcYsjyLr3myFK_t0pV6GQp8x-TOMPcIZh_1GqMrSMZo/exec', // Google Sheet 接口
-            AI_AVATAR: './avatar.png',   // GitHub 头像相对路径
+            WORKER_URL: 'https://dudao.huaged.com', // Dify Worker / Agency Proxy 接口
+            AI_AVATAR: './avatar.png',               // GitHub 头像相对路径
             USER_AVATAR: './user.png'
         };
 
@@ -712,7 +709,7 @@
             });
         });
 
-        /* --- 夜间/白天模式 --- */
+        /* --- 夜间/白天模式切换 --- */
         function initTheme() {
             const savedTheme = localStorage.getItem('nova_theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -739,7 +736,7 @@
             }
         }
 
-        /* --- 要求 6: 保存与读取 4 项精准用户档案 --- */
+        /* --- 保存与读取 4 项精准用户档案 (传递给 Dify) --- */
         function saveUserProfile() {
             const profile = {
                 years: document.getElementById('user_years').value.trim(),
@@ -788,7 +785,7 @@
         function startNewChat() {
             currentConvId = "";
             const mainContainer = document.getElementById('main-container');
-            mainContainer.classList.add('welcome-state'); // 重新开启居中显示
+            mainContainer.classList.add('welcome-state'); // 重新复位开启居中显示
 
             document.getElementById('chat-box').innerHTML = `
                 <div class="welcome-hero" id="welcome-hero">
@@ -803,7 +800,7 @@
             currentConvId = id;
             closeSidebar();
             
-            // 切换到已有对话时，退出居中模式
+            // 切换到已有对话时，退出上下居中状态
             document.getElementById('main-container').classList.remove('welcome-state');
 
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
@@ -856,7 +853,7 @@
             input.placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* --- 要求 2, 3, 6, 7: 发送逻辑 (Gemini平滑切换+收起键盘+透传Dify) --- */
+        /* --- 核心发送逻辑：对接 Dify API --- */
         async function sendMessage() {
             const input = document.getElementById('user_input');
             const text = input.value.trim();
@@ -869,12 +866,12 @@
                 return;
             }
 
-            // 要求 3: 移动端自动收起软键盘，输入框高度复位
+            // 移动端收起软键盘，重置输入框高度
             input.blur();
             input.value = '';
             input.style.height = 'auto';
 
-            // 要求 2: 退出 Gemini 居中模式，对话框平滑下移到底部
+            // 退出居中状态，移除居中 Hero
             const mainContainer = document.getElementById('main-container');
             if (mainContainer.classList.contains('welcome-state')) {
                 mainContainer.classList.remove('welcome-state');
@@ -885,17 +882,17 @@
             appendMessage('user', text);
             scrollToBottom();
 
-            // 读取 4 项用户档案打包传递给 Dify
+            // 读取 4 项用户知识库档案
             const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
 
             const loadingId = appendThinking();
 
             try {
+                // 构造传递给 Dify 智能体 Worker 的完整 Payload 格式
                 const payload = {
                     "inputs": {
                         "task_mode": currentMode,
                         "auth_code": auth,
-                        // 要求 6&7: 组装 4 项档案透传至 Dify 智能体
                         "user_years": userProfile.years || "",
                         "user_school": userProfile.school || "",
                         "user_positioning": userProfile.positioning || "",
@@ -903,7 +900,7 @@
                     },
                     "query": text,
                     "response_mode": "blocking",
-                    "conversation_id": currentConvId,
+                    "conversation_id": currentConvId || "",
                     "user": "user_" + auth.substring(0, 6)
                 };
 
@@ -915,24 +912,29 @@
 
                 removeThinking(loadingId);
 
-                if (!response.ok) throw new Error("接口响应失败");
+                if (!response.ok) throw new Error("接口网络响应异常");
 
                 const data = await response.json();
-                const aiReply = data.answer || "已收到，但模型未给出有效答复。";
+                const aiReply = data.answer || "已收到，但智能体未给出有效答复。";
 
                 appendMessage('ai', aiReply);
                 scrollToBottom();
 
-                if (currentConvId !== data.conversation_id) {
-                    currentConvId = data.conversation_id || 'conv_' + Date.now();
-                    updateChatList(currentConvId, text);
+                // 更新会话 ID 与历史纪录列表
+                if (data.conversation_id) {
+                    const isNew = !currentConvId;
+                    currentConvId = data.conversation_id;
+                    if (isNew) {
+                        updateChatList(currentConvId, text);
+                    }
                 }
+                
                 saveMsg(currentConvId, 'user', text);
                 saveMsg(currentConvId, 'ai', aiReply);
 
             } catch (err) {
                 removeThinking(loadingId);
-                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或 API 网络)`);
+                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或 Dify 节点服务状态)`);
                 scrollToBottom();
             }
         }
