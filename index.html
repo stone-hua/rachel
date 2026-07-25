@@ -155,7 +155,7 @@
             opacity: 1;
         }
 
-        /* 侧边栏底部 (包含夜间模式 + 瑞秋工作室版权信息) */
+        /* 侧边栏底部 (包含夜间模式 + 瑞秋工作室出品标记) */
         .sidebar-footer {
             padding: 15px;
             border-top: 1px solid var(--border);
@@ -209,6 +209,7 @@
             height: 100%;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .header {
@@ -252,10 +253,9 @@
         .icon-btn-wrapper {
             display: flex;
             align-items: center;
-            gap: 5px;
             cursor: pointer;
             color: var(--text-sub);
-            font-size: 14px;
+            font-size: 18px;
             transition: 0.2s;
         }
 
@@ -263,7 +263,7 @@
             color: var(--primary);
         }
 
-        /* 对话区：支持类似 Gemini / ChatGPT 的电脑端首页居中样式 */
+        /* --- Gemini 风格居中与对话布局 --- */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -278,9 +278,8 @@
             transition: all 0.3s ease;
         }
 
-        /* 初始居中 Hero */
+        /* 初始居中 Hero 标语 */
         .welcome-hero {
-            margin: auto 0;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -300,6 +299,20 @@
         .welcome-hero p {
             color: var(--text-sub);
             font-size: 15px;
+        }
+
+        /* Gemini 居中核心样式控制 */
+        .main-container.welcome-state .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        .main-container.welcome-state .welcome-hero {
+            margin: auto 0 20px 0;
         }
 
         /* 消息气泡 */
@@ -349,7 +362,7 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* --- 3. 底部固定容器 (输入框 + 5模式按钮) --- */
+        /* --- 3. 输入框 + 5模式按钮 --- */
         .input-container {
             width: 100%;
             max-width: 850px;
@@ -360,9 +373,10 @@
             flex-direction: column;
             gap: 12px;
             flex-shrink: 0;
+            transition: all 0.3s ease;
         }
 
-        /* 大圆角搜索引擎式输入框 */
+        /* 搜索引擎式圆角输入框 */
         .input-box-wrapper {
             background: var(--input-bg);
             border-radius: 28px;
@@ -467,7 +481,7 @@
             display: block;
         }
 
-        /* 弹窗通用样式 */
+        /* 弹窗通用 */
         .modal {
             display: none;
             position: fixed;
@@ -566,7 +580,6 @@
                 <i class="fas fa-trash-alt" title="清空缓存" style="cursor:pointer; color: var(--text-sub);" onclick="clearAllCache()"></i>
             </div>
 
-            <!-- 要求 2: 左下角工作室落款信息 -->
             <div class="studio-brand-info">
                 <span>瑞秋工作室出品</span>
                 联系微信 / 咨询： RachelStudio2025
@@ -574,8 +587,8 @@
         </div>
     </div>
 
-    <!-- 2. 主界面 -->
-    <div class="main-container">
+    <!-- 2. 主界面 (默认开启 welcome-state 居中模式) -->
+    <div class="main-container welcome-state" id="main-container">
         <!-- 顶栏 -->
         <div class="header">
             <div class="header-left">
@@ -583,18 +596,17 @@
                 <div class="logo">AI Nova</div>
             </div>
             <div class="header-actions">
-                <!-- 要求 1: 右上角用户个人档案 (我) 按钮 -->
-                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置个人档案/知识库">
-                    <i class="fas fa-user-circle" style="font-size: 18px;"></i>
-                    <span style="font-size: 13px;">我</span>
+                <!-- 要求 5: 仅保留用户图标，去掉“我”字 -->
+                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置用户专属档案">
+                    <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="icon-btn-wrapper" onclick="openModal('settings-modal')" title="输入授权码">
-                    <i class="fas fa-key" style="font-size: 16px;"></i>
+                    <i class="fas fa-key"></i>
                 </div>
             </div>
         </div>
 
-        <!-- 对话展示区 (要求 3: 电脑端打开时居中，使用后平滑滑动) -->
+        <!-- 对话展示区 (要求 1&4: Gemini 居中与平滑移动) -->
         <div class="chat-area" id="chat-box">
             <div class="welcome-hero" id="welcome-hero">
                 <h1>让 AI 创造更多可能</h1>
@@ -631,27 +643,28 @@
         </div>
     </div>
 
-    <!-- 要求 1: 用户个人档案/知识库弹窗 -->
+    <!-- 要求 6: 4项精准用户档案 (知识库) 弹窗 -->
     <div class="modal" id="profile-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
             <h3 style="margin-bottom: 5px;">👤 用户专属档案 (知识库)</h3>
-            <p style="font-size: 12px; color: var(--text-sub);">完善您的个人背景，AI 智能体将为您提供更精准的定制化回答（选填，不填则默认）。</p>
+            <p style="font-size: 12px; color: var(--text-sub);">完善您的背景信息（可选项），AI 将结合您的派系与定位提供更精准的回答。</p>
+            
             <div class="form-group">
-                <label>您的称呼 / 姓名</label>
-                <input type="text" id="user_name" class="form-control" placeholder="例如：张咨询师 / Rachel">
-            </div>
-            <div class="form-group">
-                <label>从业年限 / 背景</label>
+                <label>从业年限</label>
                 <input type="text" id="user_years" class="form-control" placeholder="例如：从业3年 / 心理学爱好者">
             </div>
             <div class="form-group">
-                <label>主修/偏好流派</label>
-                <input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 人本主义">
+                <label>你的技法（派系）</label>
+                <input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 拉康派">
             </div>
             <div class="form-group">
-                <label>补充偏好说明</label>
-                <textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨、多结合案例分析..."></textarea>
+                <label>定位（人群 * 问题）</label>
+                <input type="text" id="user_positioning" class="form-control" placeholder="例如：青少年情绪问题 / 职场焦虑排解">
+            </div>
+            <div class="form-group">
+                <label>其他补充说明</label>
+                <textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨，多结合实际干预建议..."></textarea>
             </div>
             <button class="btn-submit" onclick="saveUserProfile()">保存档案</button>
         </div>
@@ -672,10 +685,10 @@
         </div>
     </div>
 
-    <!-- JavaScript 脚本 -->
+    <!-- JavaScript 核心逻辑 -->
     <script>
         const CONFIG = {
-            WORKER_URL: 'https://dudao.huaged.com', // 预留 Dify Proxy / Worker 接口
+            WORKER_URL: 'https://dudao.huaged.com', // Dify Proxy / Worker 接口
             LOG_URL: 'https://script.google.com/macros/s/AKfycbzPdO5TOYdeKS2W6ZOo5J4rihcYsjyLr3myFK_t0pV6GQp8x-TOMPcIZh_1GqMrSMZo/exec', // Google Sheet 接口
             AI_AVATAR: './avatar.png',   // GitHub 头像相对路径
             USER_AVATAR: './user.png'
@@ -726,25 +739,25 @@
             }
         }
 
-        /* --- 要求 1: 保存与读取用户专属档案 --- */
+        /* --- 要求 6: 保存与读取 4 项精准用户档案 --- */
         function saveUserProfile() {
             const profile = {
-                name: document.getElementById('user_name').value.trim(),
                 years: document.getElementById('user_years').value.trim(),
                 school: document.getElementById('user_school').value.trim(),
+                positioning: document.getElementById('user_positioning').value.trim(),
                 notes: document.getElementById('user_notes').value.trim()
             };
             localStorage.setItem('nova_user_profile', JSON.stringify(profile));
             closeModal('profile-modal');
-            alert("个人档案更新成功！智能体将自动适配您的个性化背景。");
+            alert("档案保存成功！后续回答将自动结合您的专业定位。");
         }
 
         function loadUserProfile() {
             const profile = JSON.parse(localStorage.getItem('nova_user_profile'));
             if (profile) {
-                document.getElementById('user_name').value = profile.name || '';
                 document.getElementById('user_years').value = profile.years || '';
                 document.getElementById('user_school').value = profile.school || '';
+                document.getElementById('user_positioning').value = profile.positioning || '';
                 document.getElementById('user_notes').value = profile.notes || '';
             }
         }
@@ -774,6 +787,9 @@
 
         function startNewChat() {
             currentConvId = "";
+            const mainContainer = document.getElementById('main-container');
+            mainContainer.classList.add('welcome-state'); // 重新开启居中显示
+
             document.getElementById('chat-box').innerHTML = `
                 <div class="welcome-hero" id="welcome-hero">
                     <h1>让 AI 创造更多可能</h1>
@@ -786,6 +802,10 @@
         function loadChat(id) {
             currentConvId = id;
             closeSidebar();
+            
+            // 切换到已有对话时，退出居中模式
+            document.getElementById('main-container').classList.remove('welcome-state');
+
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
             const box = document.getElementById('chat-box');
             box.innerHTML = '';
@@ -836,7 +856,7 @@
             input.placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* --- 核心发送逻辑 (透传档案至 Dify + Gemini 风格滑动) --- */
+        /* --- 要求 2, 3, 6, 7: 发送逻辑 (Gemini平滑切换+收起键盘+透传Dify) --- */
         async function sendMessage() {
             const input = document.getElementById('user_input');
             const text = input.value.trim();
@@ -849,18 +869,23 @@
                 return;
             }
 
+            // 要求 3: 移动端自动收起软键盘，输入框高度复位
             input.blur();
             input.value = '';
             input.style.height = 'auto';
 
-            // 移除居中 Hero (从居中态平滑切换到对话态)
-            const hero = document.getElementById('welcome-hero');
-            if (hero) hero.remove();
+            // 要求 2: 退出 Gemini 居中模式，对话框平滑下移到底部
+            const mainContainer = document.getElementById('main-container');
+            if (mainContainer.classList.contains('welcome-state')) {
+                mainContainer.classList.remove('welcome-state');
+                const hero = document.getElementById('welcome-hero');
+                if (hero) hero.remove();
+            }
 
             appendMessage('user', text);
             scrollToBottom();
 
-            // 读取用户档案，打包传递给 Dify 后端
+            // 读取 4 项用户档案打包传递给 Dify
             const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
 
             const loadingId = appendThinking();
@@ -870,10 +895,10 @@
                     "inputs": {
                         "task_mode": currentMode,
                         "auth_code": auth,
-                        // 要求 1: 传给 Dify 的用户专属档案变量
-                        "user_name": userProfile.name || "普通用户",
-                        "user_years": userProfile.years || "未填写",
-                        "user_school": userProfile.school || "通用",
+                        // 要求 6&7: 组装 4 项档案透传至 Dify 智能体
+                        "user_years": userProfile.years || "",
+                        "user_school": userProfile.school || "",
+                        "user_positioning": userProfile.positioning || "",
                         "user_notes": userProfile.notes || ""
                     },
                     "query": text,
