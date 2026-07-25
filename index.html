@@ -57,7 +57,7 @@
             display: flex;
         }
 
-        /* --- 1. 左侧抽屉式历史会话 --- */
+        /* --- 1. 左侧抽屉式历史会话 (电脑端/移动端全分辨率强制默认隐藏) --- */
         .sidebar {
             width: var(--sidebar-width);
             height: 100%;
@@ -65,26 +65,17 @@
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            position: absolute;
+            position: fixed !important; /* 强制固定定位 */
             left: 0;
             top: 0;
-            z-index: 100;
-            transform: translateX(-100%);
+            z-index: 1000;
+            transform: translateX(-100%) !important; /* 强制所有分辨率屏幕默认向左隐藏 */
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
         }
 
         .sidebar.open {
-            transform: translateX(0);
-        }
-
-        @media (min-width: 992px) {
-            .sidebar {
-                position: relative;
-                transform: translateX(0);
-            }
-            .sidebar.collapsed {
-                margin-left: calc(-1 * var(--sidebar-width));
-            }
+            transform: translateX(0) !important; /* 点击菜单后弹出显示 */
         }
 
         .sidebar-header {
@@ -207,6 +198,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            width: 100%;
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -234,6 +226,14 @@
             font-size: 18px;
             cursor: pointer;
             color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .toggle-btn:hover {
+            color: var(--primary);
+            background: rgba(104, 92, 255, 0.1);
         }
 
         .logo {
@@ -361,15 +361,15 @@
             transition: all 0.3s ease;
         }
 
-        /* ★★★ 关键修改：当处于 welcome-state 时，将【标语+对话框+按钮】整体在页面中上下上下垂直居中 ★★★ */
+        /* 处于 welcome-state 时，标语+对话框+模式按钮整体上下左右垂直居中 */
         .main-container.welcome-state .chat-area {
             flex: 0 0 auto;
-            margin-top: auto; /* 吸收上方剩余空间 */
+            margin-top: auto;
             padding-bottom: 10px;
         }
 
         .main-container.welcome-state .input-container {
-            margin-bottom: auto; /* 吸收下方剩余空间，形成上下精准垂直居中 */
+            margin-bottom: auto;
         }
 
         /* 搜索引擎式圆角输入框 (对话框) */
@@ -469,7 +469,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.4);
-            z-index: 90;
+            z-index: 900;
             display: none;
         }
 
@@ -486,7 +486,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 200;
+            z-index: 2000;
             justify-content: center;
             align-items: center;
             padding: 20px;
@@ -588,7 +588,7 @@
         <!-- 顶栏 -->
         <div class="header">
             <div class="header-left">
-                <i class="fas fa-bars toggle-btn" onclick="toggleSidebar()"></i>
+                <i class="fas fa-bars toggle-btn" onclick="toggleSidebar()" title="点击展开/收起侧边栏"></i>
                 <div class="logo">AI Nova</div>
             </div>
             <div class="header-actions">
@@ -756,7 +756,7 @@
             }
         }
 
-        /* --- 抽屉与历史记录管理 --- */
+        /* --- 侧边栏与历史记录管理 --- */
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
@@ -782,7 +782,7 @@
         function startNewChat() {
             currentConvId = "";
             const mainContainer = document.getElementById('main-container');
-            mainContainer.classList.add('welcome-state'); // 开启上下居中模式
+            mainContainer.classList.add('welcome-state'); // 开启居中模式
 
             document.getElementById('chat-box').innerHTML = `
                 <div class="welcome-hero" id="welcome-hero">
@@ -797,7 +797,7 @@
             currentConvId = id;
             closeSidebar();
             
-            // 切换到已有对话时，退出上下居中状态，对话框恢复在底部
+            // 切换到已有对话时，退出居中状态，对话框恢复在底部
             document.getElementById('main-container').classList.remove('welcome-state');
 
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
