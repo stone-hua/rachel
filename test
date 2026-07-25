@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI Nova 智能助手 - 瑞秋工作室</title>
+
+    <!-- 引入 Markdown 解析库与 FontAwesome 图标库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* --- 全局 CSS 变量 (白天/夜间模式) --- */
+        :root {
+            --primary: #685cff;
+            --primary-gradient: linear-gradient(135deg, #685cff, #c43cff);
+            --bg-main: #f8f9ff;
+            --bg-card: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --border: #e2e8f0;
+            --input-bg: #ffffff;
+            --sidebar-width: 280px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #121212;
+            --bg-card: #1e1e2d;
+            --text-main: #e2e8f0;
+            --text-sub: #a0aec0;
+            --border: #2d3748;
+            --input-bg: #1a1a27;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            display: flex;
+        }
+
+        /* --- 1. 左侧抽屉式历史会话 (电脑端/移动端统一默认隐藏) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed; /* 使用 fixed 保证在桌面端与移动端平滑抽屉弹出 */
+            left: 0;
+            top: 0;
+            z-index: 100;
+            transform: translateX(-100%); /* 默认隐藏在屏幕外 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.open {
+            transform: translateX(0); /* 点击菜单后显示 */
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .btn-new-chat {
+            width: 100%;
+            padding: 12px;
+            border-radius: 24px;
+            border: 1px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-new-chat:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .history-item {
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+
+        .history-item:hover, .history-item.active {
+            background: rgba(104, 92, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .history-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+
+        .history-actions i {
+            margin-left: 8px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .history-actions i:hover {
+            opacity: 1;
+        }
+
+        /* 侧边栏底部 */
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .theme-toggle-btn:hover {
+            color: var(--primary);
+        }
+
+        .studio-brand-info {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            border-top: 1px dashed var(--border);
+            padding-top: 10px;
+        }
+
+        .studio-brand-info span {
+            display: block;
+            font-weight: 500;
+        }
+
+        /* --- 2. 主页面布局 --- */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            height: 55px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toggle-btn {
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-main);
+            padding: 4px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            color: var(--primary);
+            background: rgba(104, 92, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .icon-btn-wrapper {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-sub);
+            font-size: 18px;
+            transition: 0.2s;
+        }
+
+        .icon-btn-wrapper:hover {
+            color: var(--primary);
+        }
+
+        /* --- 对话展示区 --- */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            -webkit-overflow-scrolling: touch;
+            transition: all 0.3s ease;
+        }
+
+        .welcome-hero {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .welcome-hero h1 {
+            font-size: 30px;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .welcome-hero p {
+            color: var(--text-sub);
+            font-size: 14px;
+        }
+
+        /* 消息气泡 */
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 90%;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-break: break-word;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .message.user .bubble {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai .bubble {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* --- 3. 输入框 + 5模式按钮 --- */
+        .input-container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 10px 15px 20px 15px;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        /* 处于 welcome-state 时，标语+对话框+模式按钮整体居中 */
+        .main-container.welcome-state .chat-area {
+            flex: 0 0 auto;
+            margin-top: auto;
+            padding-bottom: 10px;
+        }
+
+        .main-container.welcome-state .input-container {
+            margin-bottom: auto;
+        }
+
+        /* 搜索引擎式圆角输入框 (对话框) */
+        .input-box-wrapper {
+            background: var(--input-bg);
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            box-shadow: var(--shadow);
+            transition: border-color 0.2s;
+        }
+
+        .input-box-wrapper:focus-within {
+            border-color: var(--primary);
+        }
+
+        textarea.chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            resize: none;
+            padding: 8px 0;
+            max-height: 120px;
+            min-height: 24px;
+            font-size: 16px;
+            font-family: inherit;
+            line-height: 1.5;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+
+        /* 5 种 Agent 模式 (两边对齐) */
+        .agent-modes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .mode-chip {
+            flex: 1;
+            padding: 8px 0;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 480px) {
+            .mode-chip {
+                font-size: 11px;
+                padding: 6px 0;
+            }
+            .mode-chip i {
+                display: none;
+            }
+        }
+
+        .mode-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 90;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* 弹窗通用 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .auth-tip {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- 1. 左侧抽屉历史记录 + 夜间模式 + 瑞秋工作室出品标记 -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="btn-new-chat" onclick="startNewChat()">
+                <i class="fas fa-plus"></i> 开启新对话
+            </button>
+        </div>
+        <div class="history-list" id="history-list"></div>
+        <div class="sidebar-footer">
+            <div class="footer-row">
+                <div class="theme-toggle-btn" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span id="theme-text">夜间模式</span>
+                </div>
+                <i class="fas fa-trash-alt" title="清空缓存" style="cursor:pointer; color: var(--text-sub);" onclick="clearAllCache()"></i>
+            </div>
+
+            <div class="studio-brand-info">
+                <span>瑞秋工作室出品</span>
+                联系微信 / 咨询： RachelStudio2025
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 主界面 (默认开启 welcome-state 居中模式) -->
+    <div class="main-container welcome-state" id="main-container">
+        <!-- 顶栏 -->
+        <div class="header">
+            <div class="header-left">
+                <i class="fas fa-bars toggle-btn" onclick="toggleSidebar()" title="展开/收起菜单"></i>
+                <div class="logo">AI Nova</div>
+            </div>
+            <div class="header-actions">
+                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置用户专属档案">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="icon-btn-wrapper" onclick="openModal('settings-modal')" title="输入授权码">
+                    <i class="fas fa-key"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 对话展示区 -->
+        <div class="chat-area" id="chat-box">
+            <div class="welcome-hero" id="welcome-hero">
+                <h1>让 AI 创造更多可能</h1>
+                <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
+            </div>
+        </div>
+
+        <!-- 3. 底部固定/初始居中区：对话框 + 5模式切换 -->
+        <div class="input-container">
+            <div class="input-box-wrapper">
+                <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
+                <div class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+            </div>
+
+            <div class="agent-modes">
+                <div class="mode-chip active" data-mode="supervisor" onclick="switchAgentMode('supervisor', this)">
+                    <i class="fas fa-user-graduate"></i> 个案督导
+                </div>
+                <div class="mode-chip" data-mode="simulation" onclick="switchAgentMode('simulation', this)">
+                    <i class="fas fa-theater-masks"></i> 咨询陪练
+                </div>
+                <div class="mode-chip" data-mode="business" onclick="switchAgentMode('business', this)">
+                    <i class="fas fa-chart-line"></i> 商业教练
+                </div>
+                <div class="mode-chip" data-mode="science" onclick="switchAgentMode('science', this)">
+                    <i class="fas fa-book-open"></i> 心理科普
+                </div>
+                <div class="mode-chip" data-mode="free" onclick="switchAgentMode('free', this)">
+                    <i class="fas fa-sparkles"></i> 自由创作
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4项精准用户档案 (知识库) 弹窗 -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
+            <h3 style="margin-bottom: 5px;">👤 用户专属档案 (知识库)</h3>
+            <p style="font-size: 12px; color: var(--text-sub);">完善您的背景信息（可选项），AI 将结合您的派系与定位提供更精准的回答。</p>
+            
+            <div class="form-group">
+                <label>从业年限</label>
+                <input type="text" id="user_years" class="form-control" placeholder="例如：从业3年 / 心理学爱好者">
+            </div>
+            <div class="form-group">
+                <label>你的技法（派系）</label>
+                <input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 拉康派">
+            </div>
+            <div class="form-group">
+                <label>定位（人群 * 问题）</label>
+                <input type="text" id="user_positioning" class="form-control" placeholder="例如：青少年情绪问题 / 职场焦虑排解">
+            </div>
+            <div class="form-group">
+                <label>其他补充说明</label>
+                <textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨，多结合实际干预建议..."></textarea>
+            </div>
+            <button class="btn-submit" onclick="saveUserProfile()">保存档案</button>
+        </div>
+    </div>
+
+    <!-- 授权码弹窗 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('settings-modal')">&times;</span>
+            <h3 style="margin-bottom: 5px;">🔑 身份授权</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">请输入您的 VIP 授权码以解锁所有 AI 服务</p>
+            <div class="form-group">
+                <label>授权码 (Auth Code)</label>
+                <input type="text" id="auth_code" class="form-control" placeholder="请输入您的授权码">
+                <div class="auth-tip" id="auth-tip">⚠️ 请先输入有效的授权码才能继续使用！</div>
+            </div>
+            <button class="btn-submit" onclick="saveConfig()">保存并体验</button>
+        </div>
+    </div>
+
+    <!-- JavaScript 核心逻辑 -->
+    <script>
+        const CONFIG = {
+            WORKER_URL: 'https://dudao.huaged.com', // Dify Worker / Agency Proxy 接口
+            AI_AVATAR: './avatar.png',               // GitHub 头像相对路径
+            USER_AVATAR: './user.png'
+        };
+
+        let currentConvId = "";
+        let currentMode = "supervisor";
+        let chatList = JSON.parse(localStorage.getItem('nova_chat_list')) || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            loadUserProfile();
+            renderHistory();
+            initTheme();
+
+            document.getElementById('user_input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        /* --- 夜间/白天模式切换 --- */
+        function initTheme() {
+            const savedTheme = localStorage.getItem('nova_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeUI(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('nova_theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+                text.innerText = '白天模式';
+            } else {
+                icon.className = 'fas fa-moon';
+                text.innerText = '夜间模式';
+            }
+        }
+
+        /* --- 保存与读取 4 项精准用户档案 (透传至 Dify) --- */
+        function saveUserProfile() {
+            const profile = {
+                years: document.getElementById('user_years').value.trim(),
+                school: document.getElementById('user_school').value.trim(),
+                positioning: document.getElementById('user_positioning').value.trim(),
+                notes: document.getElementById('user_notes').value.trim()
+            };
+            localStorage.setItem('nova_user_profile', JSON.stringify(profile));
+            closeModal('profile-modal');
+            alert("档案保存成功！后续回答将自动结合您的专业定位。");
+        }
+
+        function loadUserProfile() {
+            const profile = JSON.parse(localStorage.getItem('nova_user_profile'));
+            if (profile) {
+                document.getElementById('user_years').value = profile.years || '';
+                document.getElementById('user_school').value = profile.school || '';
+                document.getElementById('user_positioning').value = profile.positioning || '';
+                document.getElementById('user_notes').value = profile.notes || '';
+            }
+        }
+
+        /* --- 侧边栏与历史记录管理 --- */
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        function renderHistory() {
+            const listEl = document.getElementById('history-list');
+            listEl.innerHTML = chatList.map(item => `
+                <div class="history-item ${item.id === currentConvId ? 'active' : ''}" onclick="loadChat('${item.id}')">
+                    <span class="history-title">${item.title}</span>
+                    <div class="history-actions">
+                        <i class="fas fa-trash" onclick="deleteChat('${item.id}', event)"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function startNewChat() {
+            currentConvId = "";
+            const mainContainer = document.getElementById('main-container');
+            mainContainer.classList.add('welcome-state'); // 开启居中模式
+
+            document.getElementById('chat-box').innerHTML = `
+                <div class="welcome-hero" id="welcome-hero">
+                    <h1>让 AI 创造更多可能</h1>
+                    <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
+                </div>`;
+            closeSidebar();
+            renderHistory();
+        }
+
+        function loadChat(id) {
+            currentConvId = id;
+            closeSidebar();
+            
+            // 切换到已有对话时，退出居中状态，对话框恢复在底部
+            document.getElementById('main-container').classList.remove('welcome-state');
+
+            const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
+            const box = document.getElementById('chat-box');
+            box.innerHTML = '';
+            msgs.forEach(m => appendMessage(m.role, m.content));
+            scrollToBottom();
+            renderHistory();
+        }
+
+        function saveMsg(id, role, content) {
+            let msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
+            msgs.push({ role, content });
+            localStorage.setItem(`nova_msg_${id}`, JSON.stringify(msgs));
+        }
+
+        function updateChatList(id, firstMsg) {
+            const title = firstMsg.substring(0, 12) + "...";
+            if (!chatList.find(c => c.id === id)) {
+                chatList.unshift({ id, title });
+                localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
+                renderHistory();
+            }
+        }
+
+        function deleteChat(id, e) {
+            e.stopPropagation();
+            if (!confirm("确认删除此记录？")) return;
+            chatList = chatList.filter(c => c.id !== id);
+            localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
+            localStorage.removeItem(`nova_msg_${id}`);
+            renderHistory();
+            if (currentConvId === id) startNewChat();
+        }
+
+        /* --- 5 种 Agent 模式切换 --- */
+        function switchAgentMode(modeKey, el) {
+            currentMode = modeKey;
+            document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active'));
+            el.classList.add('active');
+            
+            const input = document.getElementById('user_input');
+            const placeholders = {
+                supervisor: '输入心理咨询案例或督导需求...',
+                simulation: '扮演来访者，请输入第一句话...',
+                business: '提出创业获客或变现问题...',
+                science: '检索心理学知识或概念...',
+                free: '发送消息给 AI Nova...'
+            };
+            input.placeholder = placeholders[modeKey] || '发送消息...';
+        }
+
+        /* --- 发送逻辑：自动对接 Dify --- */
+        async function sendMessage() {
+            const input = document.getElementById('user_input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const auth = localStorage.getItem('nova_auth');
+            if (!auth) {
+                document.getElementById('auth-tip').style.display = 'block';
+                openModal('settings-modal');
+                return;
+            }
+
+            // 移动端自动收起软键盘，输入框高度复位
+            input.blur();
+            input.value = '';
+            input.style.height = 'auto';
+
+            // 发送消息后，退出居中状态，对话框沉底
+            const mainContainer = document.getElementById('main-container');
+            if (mainContainer.classList.contains('welcome-state')) {
+                mainContainer.classList.remove('welcome-state');
+                const hero = document.getElementById('welcome-hero');
+                if (hero) hero.remove();
+            }
+
+            appendMessage('user', text);
+            scrollToBottom();
+
+            // 读取 4 项用户档案传递给 Dify
+            const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
+
+            const loadingId = appendThinking();
+
+            try {
+                const payload = {
+                    "inputs": {
+                        "task_mode": currentMode,
+                        "auth_code": auth,
+                        "user_years": userProfile.years || "",
+                        "user_school": userProfile.school || "",
+                        "user_positioning": userProfile.positioning || "",
+                        "user_notes": userProfile.notes || ""
+                    },
+                    "query": text,
+                    "response_mode": "blocking",
+                    "conversation_id": currentConvId || "",
+                    "user": "user_" + auth.substring(0, 6)
+                };
+
+                const response = await fetch(CONFIG.WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                removeThinking(loadingId);
+
+                if (!response.ok) throw new Error("接口响应失败");
+
+                const data = await response.json();
+                const aiReply = data.answer || "已收到，但模型未给出有效答复。";
+
+                appendMessage('ai', aiReply);
+                scrollToBottom();
+
+                if (data.conversation_id) {
+                    const isNew = !currentConvId;
+                    currentConvId = data.conversation_id;
+                    if (isNew) {
+                        updateChatList(currentConvId, text);
+                    }
+                }
+                
+                saveMsg(currentConvId, 'user', text);
+                saveMsg(currentConvId, 'ai', aiReply);
+
+            } catch (err) {
+                removeThinking(loadingId);
+                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或网络状态)`);
+                scrollToBottom();
+            }
+        }
+
+        function appendMessage(role, text) {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+
+            const avatarUrl = role === 'ai' ? CONFIG.AI_AVATAR : CONFIG.USER_AVATAR;
+            const avatarHtml = `<div class="avatar" style="background-image: url('${avatarUrl}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>`;
+
+            div.innerHTML = `
+                ${avatarHtml}
+                <div class="bubble-content">
+                    <div class="bubble">${marked.parse(text)}</div>
+                </div>`;
+
+            box.appendChild(div);
+        }
+
+        function appendThinking() {
+            const id = 'think_' + Date.now();
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'message ai';
+            div.innerHTML = `
+                <div class="avatar" style="background-image: url('${CONFIG.AI_AVATAR}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>
+                <div class="bubble"><i class="fas fa-spinner fa-spin"></i> 思考中...</div>`;
+            box.appendChild(div);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeThinking(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function scrollToBottom() {
+            const box = document.getElementById('chat-box');
+            box.scrollTo({
+                top: box.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        /* --- 弹窗逻辑 --- */
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function saveConfig() {
+            const auth = document.getElementById('auth_code').value.trim();
+            if (!auth) {
+                document.getElementById('auth-tip').style.display = 'block';
+                return;
+            }
+            localStorage.setItem('nova_auth', auth);
+            document.getElementById('auth-tip').style.display = 'none';
+            closeModal('settings-modal');
+        }
+
+        function loadConfig() {
+            const auth = localStorage.getItem('nova_auth');
+            if (auth) document.getElementById('auth_code').value = auth;
+        }
+
+        function clearAllCache() {
+            if (confirm("确定要清空本地所有聊天记录与配置？")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    </script>
+</body>
+
+</html>
