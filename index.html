@@ -80,7 +80,6 @@
         .form-group { margin: 15px 0; }
         .form-group label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
         .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; background: var(--input-bg); color: var(--text-main); font-size: 14px; }
-        select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; cursor: pointer; }
         .btn-submit { width: 100%; padding: 12px; background: var(--primary-gradient); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .auth-tip { font-size: 12px; color: #e74c3c; margin-top: 5px; display: none; }
         .privacy-body { max-height: 260px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: var(--text-main); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin: 15px 0; }
@@ -128,7 +127,6 @@
                 <div class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             </div>
             
-            <!-- 💥 核心更新：匹配 Dify 要求的英文暗号 (UI仍显示中文) 💥 -->
             <div class="agent-modes">
                 <div class="mode-chip active" data-mode="pyq" onclick="switchAgentMode('pyq', this)"><i class="fas fa-mobile-alt"></i> 发圈神器</div>
                 <div class="mode-chip" data-mode="deal" onclick="switchAgentMode('deal', this)"><i class="fas fa-handshake"></i> 走心成交</div>
@@ -145,17 +143,12 @@
             <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
             <h3 style="margin-bottom: 5px;">👤 用户专属档案</h3>
             <p style="font-size: 12px; color: var(--text-sub);">完善您的背景信息（可选项），AI 将结合您的派系与定位提供更精准的回答。</p>
+            
             <div class="form-group">
-                <label>从业年限</label>
-                <select id="user_years" class="form-control">
-                    <option value="">请选择 (选填)</option>
-                    <option value="1年以下">1年以下 (新手)</option>
-                    <option value="1-3年">1-3年 (初级)</option>
-                    <option value="3-5年">3-5年 (中级)</option>
-                    <option value="5-10年">5-10年 (资深)</option>
-                    <option value="10年以上">10年以上 (专家)</option>
-                </select>
+                <label>从业年限 (请输入数字)</label>
+                <input type="number" id="user_years" class="form-control" placeholder="例如填入: 3 (代表3年)" min="0" step="1">
             </div>
+            
             <div class="form-group"><label>你的技法（派系）</label><input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 拉康派"></div>
             <div class="form-group"><label>定位（人群 * 问题）</label><input type="text" id="user_positioning" class="form-control" placeholder="例如：青少年情绪问题 / 职场焦虑排解"></div>
             <div class="form-group"><label>其他补充说明</label><textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨..."></textarea></div>
@@ -198,7 +191,7 @@
 
         const THEMES = ['light', 'dusk', 'dark']; 
         let currentConvId = "";
-        let currentMode = "pyq"; // 默认加载发圈神器
+        let currentMode = "pyq"; 
         let chatList = JSON.parse(localStorage.getItem('nova_chat_list')) || [];
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -222,13 +215,25 @@
         function agreePrivacy() { localStorage.setItem('nova_privacy_agreed', 'true'); closeModal('privacy-modal'); }
 
         function saveUserProfile() {
-            const profile = { years: document.getElementById('user_years').value, school: document.getElementById('user_school').value.trim(), positioning: document.getElementById('user_positioning').value.trim(), notes: document.getElementById('user_notes').value.trim() };
-            localStorage.setItem('nova_user_profile', JSON.stringify(profile)); closeModal('profile-modal'); alert("档案保存成功！后续回答将自动结合您的专业定位。");
+            const profile = { 
+                years: document.getElementById('user_years').value, 
+                school: document.getElementById('user_school').value.trim(), 
+                positioning: document.getElementById('user_positioning').value.trim(), 
+                notes: document.getElementById('user_notes').value.trim() 
+            };
+            localStorage.setItem('nova_user_profile', JSON.stringify(profile)); 
+            closeModal('profile-modal'); 
+            alert("档案保存成功！后续回答将自动结合您的专业定位。");
         }
 
         function loadUserProfile() {
             const profile = JSON.parse(localStorage.getItem('nova_user_profile'));
-            if (profile) { document.getElementById('user_years').value = profile.years || ''; document.getElementById('user_school').value = profile.school || ''; document.getElementById('user_positioning').value = profile.positioning || ''; document.getElementById('user_notes').value = profile.notes || ''; }
+            if (profile) { 
+                document.getElementById('user_years').value = profile.years || ''; 
+                document.getElementById('user_school').value = profile.school || ''; 
+                document.getElementById('user_positioning').value = profile.positioning || ''; 
+                document.getElementById('user_notes').value = profile.notes || ''; 
+            }
         }
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
@@ -266,7 +271,6 @@
             localStorage.removeItem(`nova_msg_${id}`); renderHistory(); if (currentConvId === id) startNewChat();
         }
 
-        // 💥 更新：使用正确的英文暗号传递给 Dify 💥
         function switchAgentMode(modeKey, el) {
             currentMode = modeKey; 
             document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active')); 
@@ -295,15 +299,22 @@
             const loadingId = appendThinking();
 
             try {
+                // 💥 核心修复逻辑：动态构建数据包。如果用户没填年份，就不发这个字段，避免触发Dify数字校验报错 💥
+                const inputsData = {
+                    "task_mode": currentMode,
+                    "auth_code": auth,
+                    "user_school": userProfile.school || "",
+                    "user_positioning": userProfile.positioning || "",
+                    "user_notes": userProfile.notes || ""
+                };
+
+                // 只有当用户真的填写了数字时，才把 user_years 加进去
+                if (userProfile.years !== undefined && userProfile.years !== "") {
+                    inputsData["user_years"] = Number(userProfile.years);
+                }
+
                 const payload = {
-                    "inputs": {
-                        "task_mode": currentMode,
-                        "auth_code": auth,
-                        "user_years": userProfile.years || "",
-                        "user_school": userProfile.school || "",
-                        "user_positioning": userProfile.positioning || "",
-                        "user_notes": userProfile.notes || ""
-                    },
+                    "inputs": inputsData,
                     "query": text,
                     "response_mode": "blocking",
                     "conversation_id": currentConvId || "",
