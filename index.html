@@ -5,735 +5,160 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI Nova 智能助手 - 瑞秋工作室</title>
-
-    <!-- 引入 Markdown 解析库与 FontAwesome 图标库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
-        /* --- 1. 白天模式 (Default Light) --- */
-        :root, [data-theme="light"] {
-            --primary: #685cff;
-            --primary-gradient: linear-gradient(135deg, #685cff, #c43cff);
-            --bg-main: #f8f9ff;
-            --bg-card: #ffffff;
-            --text-main: #2c3e50;
-            --text-sub: #7f8c8d;
-            --border: #e2e8f0;
-            --input-bg: #ffffff;
-            --sidebar-width: 280px;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-        }
-
-        /* --- 2. 黄昏模式 (Dusk / Warm Sepia Tone) --- */
-        [data-theme="dusk"] {
-            --primary: #d97706;
-            --primary-gradient: linear-gradient(135deg, #d97706, #ea580c);
-            --bg-main: #faf4e8;
-            --bg-card: #f3e9d2;
-            --text-main: #3d2e1e;
-            --text-sub: #856e54;
-            --border: #e2d3b7;
-            --input-bg: #fffcf5;
-            --shadow: 0 8px 24px rgba(61, 46, 30, 0.08);
-        }
-
-        /* --- 3. 夜间模式 (Dark Mode) --- */
-        [data-theme="dark"] {
-            --primary: #8b5cf6;
-            --primary-gradient: linear-gradient(135deg, #8b5cf6, #d946ef);
-            --bg-main: #121212;
-            --bg-card: #1e1e2d;
-            --text-main: #e2e8f0;
-            --text-sub: #a0aec0;
-            --border: #2d3748;
-            --input-bg: #1a1a27;
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            height: 100dvh;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body {
-            display: flex;
-        }
-
-        /* --- 1. 左侧抽屉式历史会话 --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100%;
-            background: var(--bg-card);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: fixed !important;
-            left: 0;
-            top: 0;
-            z-index: 1000;
-            transform: translateX(-100%) !important; /* 强制默认隐藏 */
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .sidebar.open {
-            transform: translateX(0) !important;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .btn-new-chat {
-            width: 100%;
-            padding: 12px;
-            border-radius: 24px;
-            border: 1px solid var(--primary);
-            background: transparent;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .btn-new-chat:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        .history-item {
-            padding: 12px 15px;
-            border-radius: 12px;
-            margin-bottom: 5px;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            color: var(--text-main);
-            transition: background 0.2s;
-        }
-
-        .history-item:hover, .history-item.active {
-            background: rgba(104, 92, 255, 0.1);
-            color: var(--primary);
-        }
-
-        .history-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 170px;
-        }
-
-        .history-actions i {
-            margin-left: 8px;
-            font-size: 12px;
-            opacity: 0.6;
-        }
-
-        .history-actions i:hover {
-            opacity: 1;
-        }
-
-        /* --- 侧边栏底部整体布局控制 --- */
-        .sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .footer-btn-row {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-        }
-
-        /* 统一的同款胶囊按钮 UI 样式 */
-        .sidebar-pill-btn {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 20px;
-            background: var(--bg-main);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .sidebar-pill-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: var(--bg-card);
-        }
-
-        .sidebar-pill-btn.danger:hover {
-            border-color: #ef4444;
-            color: #ef4444;
-        }
-
-        .studio-brand-info {
-            font-size: 12px;
-            color: var(--text-sub);
-            line-height: 1.5;
-            border-top: 1px dashed var(--border);
-            padding-top: 10px;
-            margin-top: 2px;
-        }
-
-        .studio-brand-info span {
-            display: block;
-            font-weight: 500;
-        }
-
-        .icp-info {
-            margin-top: 6px;
-            font-size: 11px;
-        }
-
-        .icp-info a {
-            color: var(--text-sub);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .icp-info a:hover {
-            color: var(--primary);
-            text-decoration: underline;
-        }
-
-        /* --- 2. 主页面布局 --- */
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .header {
-            height: 55px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-card);
-            flex-shrink: 0;
-            z-index: 10;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .toggle-btn {
-            font-size: 18px;
-            cursor: pointer;
-            color: var(--text-main);
-            padding: 6px 10px;
-            border-radius: 8px;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .toggle-btn:hover {
-            color: var(--primary);
-            background: rgba(104, 92, 255, 0.1);
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 18px;
-            align-items: center;
-        }
-
-        .icon-btn-wrapper {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            color: var(--text-sub);
-            font-size: 18px;
-            transition: 0.2s;
-        }
-
-        .icon-btn-wrapper:hover {
-            color: var(--primary);
-        }
-
-        /* --- 对话展示区 --- */
-        .chat-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 850px;
-            margin: 0 auto;
-            -webkit-overflow-scrolling: touch;
-            transition: all 0.3s ease;
-        }
-
-        .welcome-hero {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-        }
-
-        .welcome-hero h1 {
-            font-size: 30px;
-            font-weight: 800;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-
-        .welcome-hero p {
-            color: var(--text-sub);
-            font-size: 14px;
-        }
-
-        /* 消息气泡 */
-        .message {
-            display: flex;
-            gap: 12px;
-            max-width: 90%;
-        }
-
-        .message.user {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .message.ai {
-            align-self: flex-start;
-        }
-
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            flex-shrink: 0;
-        }
-
-        .bubble {
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.6;
-            word-break: break-word;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .message.user .bubble {
-            background: var(--primary);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.ai .bubble {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            border-bottom-left-radius: 4px;
-        }
-
-        /* --- 3. 输入框 + 5模式按钮 --- */
-        .input-container {
-            width: 100%;
-            max-width: 850px;
-            margin: 0 auto;
-            padding: 10px 15px 20px 15px;
-            background: transparent;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
-
-        /* 处于 welcome-state 时，标语+对话框+模式按钮整体上下居中 */
-        .main-container.welcome-state .chat-area {
-            flex: 0 0 auto;
-            margin-top: auto;
-            padding-bottom: 10px;
-        }
-
-        .main-container.welcome-state .input-container {
-            margin-bottom: auto;
-        }
-
-        .input-box-wrapper {
-            background: var(--input-bg);
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            box-shadow: var(--shadow);
-            transition: border-color 0.2s;
-        }
-
-        .input-box-wrapper:focus-within {
-            border-color: var(--primary);
-        }
-
-        textarea.chat-input {
-            flex: 1;
-            border: none;
-            outline: none;
-            resize: none;
-            padding: 8px 0;
-            max-height: 120px;
-            min-height: 24px;
-            font-size: 16px;
-            font-family: inherit;
-            line-height: 1.5;
-            background: transparent;
-            color: var(--text-main);
-        }
-
-        .send-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
-            margin-bottom: 2px;
-        }
-
-        .agent-modes {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 6px;
-            width: 100%;
-        }
-
-        .mode-chip {
-            flex: 1;
-            padding: 8px 0;
-            border-radius: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            font-size: 12px;
-            color: var(--text-sub);
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 480px) {
-            .mode-chip {
-                font-size: 11px;
-                padding: 6px 0;
-            }
-            .mode-chip i {
-                display: none;
-            }
-        }
-
-        .mode-chip.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            font-weight: 600;
-        }
-
-        /* 遮罩层 */
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.4);
-            z-index: 900;
-            display: none;
-        }
-
-        .overlay.show {
-            display: block;
-        }
-
-        /* 弹窗通用 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            padding: 25px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 420px;
-            position: relative;
-            box-shadow: var(--shadow);
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 18px;
-            right: 20px;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-sub);
-        }
-
-        .form-group {
-            margin: 15px 0;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-sub);
-            margin-bottom: 6px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            outline: none;
-            background: var(--input-bg);
-            color: var(--text-main);
-            font-size: 14px;
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .auth-tip {
-            font-size: 12px;
-            color: #e74c3c;
-            margin-top: 5px;
-            display: none;
-        }
-
-        /* 隐私协议文本框样式 */
-        .privacy-body {
-            max-height: 260px;
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text-main);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 0;
-            margin: 15px 0;
-        }
+        :root, [data-theme="light"] { --primary: #685cff; --primary-gradient: linear-gradient(135deg, #685cff, #c43cff); --bg-main: #f8f9ff; --bg-card: #ffffff; --text-main: #2c3e50; --text-sub: #7f8c8d; --border: #e2e8f0; --input-bg: #ffffff; --sidebar-width: 280px; --shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
+        [data-theme="dusk"] { --primary: #d97706; --primary-gradient: linear-gradient(135deg, #d97706, #ea580c); --bg-main: #faf4e8; --bg-card: #f3e9d2; --text-main: #3d2e1e; --text-sub: #856e54; --border: #e2d3b7; --input-bg: #fffcf5; --shadow: 0 8px 24px rgba(61, 46, 30, 0.08); }
+        [data-theme="dark"] { --primary: #8b5cf6; --primary-gradient: linear-gradient(135deg, #8b5cf6, #d946ef); --bg-main: #121212; --bg-card: #1e1e2d; --text-main: #e2e8f0; --text-sub: #a0aec0; --border: #2d3748; --input-bg: #1a1a27; --shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; height: 100dvh; background-color: var(--bg-main); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif; overflow: hidden; transition: background-color 0.3s, color 0.3s; display: flex; }
+        
+        /* 左侧边栏 */
+        .sidebar { width: var(--sidebar-width); height: 100%; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed !important; left: 0; top: 0; z-index: 1000; transform: translateX(-100%) !important; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); }
+        .sidebar.open { transform: translateX(0) !important; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .btn-new-chat { width: 100%; padding: 12px; border-radius: 24px; border: 1px solid var(--primary); background: transparent; color: var(--primary); font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .btn-new-chat:hover { background: var(--primary); color: white; }
+        .history-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .history-item { padding: 12px 15px; border-radius: 12px; margin-bottom: 5px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--text-main); transition: background 0.2s; }
+        .history-item:hover, .history-item.active { background: rgba(104, 92, 255, 0.1); color: var(--primary); }
+        .history-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+        .history-actions i { margin-left: 8px; font-size: 12px; opacity: 0.6; } .history-actions i:hover { opacity: 1; }
+        
+        .sidebar-footer { padding: 15px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .footer-btn-row { display: flex; gap: 8px; width: 100%; }
+        .sidebar-pill-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 8px 10px; border-radius: 20px; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 500; transition: all 0.2s ease; white-space: nowrap; }
+        .sidebar-pill-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--bg-card); }
+        .sidebar-pill-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+        .studio-brand-info { font-size: 12px; color: var(--text-sub); line-height: 1.5; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 2px; }
+        .studio-brand-info span { display: block; font-weight: 500; }
+        .icp-info { margin-top: 6px; font-size: 11px; } .icp-info a { color: var(--text-sub); text-decoration: none; transition: color 0.2s; } .icp-info a:hover { color: var(--primary); text-decoration: underline; }
+
+        /* 主页面 */
+        .main-container { flex: 1; display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .header { height: 55px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg-card); flex-shrink: 0; z-index: 10; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .toggle-btn { font-size: 18px; cursor: pointer; color: var(--text-main); padding: 6px 10px; border-radius: 8px; transition: background 0.2s, color 0.2s; } .toggle-btn:hover { color: var(--primary); background: rgba(104, 92, 255, 0.1); }
+        .logo { font-size: 20px; font-weight: bold; background: var(--primary-gradient); -webkit-background-clip: text; color: transparent; }
+        .header-actions { display: flex; gap: 18px; align-items: center; }
+        .icon-btn-wrapper { display: flex; align-items: center; cursor: pointer; color: var(--text-sub); font-size: 18px; transition: 0.2s; } .icon-btn-wrapper:hover { color: var(--primary); }
+
+        /* 对话区 */
+        .chat-area { flex: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 850px; margin: 0 auto; -webkit-overflow-scrolling: touch; transition: all 0.3s ease; }
+        .welcome-hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 10px 0; }
+        .welcome-hero h1 { font-size: 30px; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; color: transparent; }
+        .welcome-hero p { color: var(--text-sub); font-size: 14px; }
+        .message { display: flex; gap: 12px; max-width: 90%; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; } .message.ai { align-self: flex-start; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; border: 1px solid var(--border); }
+        .bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-break: break-word; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+        .message.user .bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+        .message.ai .bubble { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); border-bottom-left-radius: 4px; }
+
+        /* 输入区 */
+        .input-container { width: 100%; max-width: 850px; margin: 0 auto; padding: 10px 15px 20px 15px; background: transparent; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; transition: all 0.3s ease; }
+        .main-container.welcome-state .chat-area { flex: 0 0 auto; margin-top: auto; padding-bottom: 10px; }
+        .main-container.welcome-state .input-container { margin-bottom: auto; }
+        .input-box-wrapper { background: var(--input-bg); border-radius: 28px; border: 1px solid var(--border); padding: 8px 16px; display: flex; align-items: flex-end; gap: 10px; box-shadow: var(--shadow); transition: border-color 0.2s; }
+        .input-box-wrapper:focus-within { border-color: var(--primary); }
+        textarea.chat-input { flex: 1; border: none; outline: none; resize: none; padding: 8px 0; max-height: 120px; min-height: 24px; font-size: 16px; font-family: inherit; line-height: 1.5; background: transparent; color: var(--text-main); }
+        .send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; margin-bottom: 2px; }
+        
+        /* 模式按钮栏 */
+        .agent-modes { display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%; overflow-x: auto; padding-bottom: 4px; }
+        .agent-modes::-webkit-scrollbar { display: none; }
+        .mode-chip { flex: 1; padding: 8px 0; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border); font-size: 12px; color: var(--text-sub); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; min-width: 80px; }
+        @media (max-width: 480px) { .mode-chip { font-size: 11px; padding: 6px 0; min-width: 70px; } .mode-chip i { display: none; } }
+        .mode-chip.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+
+        /* 弹窗及表单 */
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 900; display: none; } .overlay.show { display: block; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 20px; width: 100%; max-width: 420px; position: relative; box-shadow: var(--shadow); }
+        .close-modal { position: absolute; top: 18px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-sub); }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; background: var(--input-bg); color: var(--text-main); font-size: 14px; }
+        select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; cursor: pointer; }
+        .btn-submit { width: 100%; padding: 12px; background: var(--primary-gradient); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .auth-tip { font-size: 12px; color: #e74c3c; margin-top: 5px; display: none; }
+        .privacy-body { max-height: 260px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: var(--text-main); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin: 15px 0; }
     </style>
 </head>
 
 <body>
-
     <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-    <!-- 1. 左侧抽屉历史记录 + 统一调性胶囊按钮群 + ICP 备案号 -->
+    <!-- 左侧抽屉 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <button class="btn-new-chat" onclick="startNewChat()">
-                <i class="fas fa-plus"></i> 开启新对话
-            </button>
+            <button class="btn-new-chat" onclick="startNewChat()"><i class="fas fa-plus"></i> 开启新对话</button>
         </div>
         <div class="history-list" id="history-list"></div>
-        
         <div class="sidebar-footer">
-            <!-- 1) 用户隐私协议 (单独一行胶囊按钮) -->
             <div class="footer-btn-row">
-                <div class="sidebar-pill-btn" onclick="openModal('privacy-modal')">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>用户隐私协议</span>
-                </div>
+                <div class="sidebar-pill-btn" onclick="openModal('privacy-modal')"><i class="fas fa-shield-alt"></i><span>用户隐私协议</span></div>
             </div>
-
-            <!-- 2) 三色系模式切换 + 同款清空缓存胶囊按钮 (并排双胶囊) -->
             <div class="footer-btn-row">
-                <div class="sidebar-pill-btn" onclick="cycleTheme()" title="切换: 白天 / 黄昏 / 夜间">
-                    <i class="fas fa-sun" id="theme-icon"></i>
-                    <span id="theme-text">白天模式</span>
-                </div>
-                <div class="sidebar-pill-btn danger" onclick="clearAllCache()" title="清空聊天记录与本地缓存">
-                    <i class="fas fa-trash-alt"></i>
-                    <span>清空缓存</span>
-                </div>
+                <div class="sidebar-pill-btn" onclick="cycleTheme()" title="切换: 白天 / 黄昏 / 夜间"><i class="fas fa-sun" id="theme-icon"></i><span id="theme-text">白天模式</span></div>
+                <div class="sidebar-pill-btn danger" onclick="clearAllCache()" title="清空聊天记录与本地缓存"><i class="fas fa-trash-alt"></i><span>清空缓存</span></div>
             </div>
-
-            <!-- 3) 瑞秋工作室出品标记与 ICP 备案信息 -->
-            <div class="studio-brand-info">
-                <span>瑞秋工作室出品</span>
-                联系微信 / 咨询： RachelStudio2025
-                <div class="icp-info" id="icp-info">
-                    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备XXXXXXXX号-1</a>
-                </div>
-            </div>
+            <div class="studio-brand-info"><span>瑞秋工作室出品</span>联系微信 / 咨询： RachelStudio2025</div>
         </div>
     </div>
 
-    <!-- 2. 主界面 -->
+    <!-- 主界面 -->
     <div class="main-container welcome-state" id="main-container">
-        <!-- 顶栏 -->
         <div class="header">
-            <div class="header-left">
-                <i class="fas fa-bars toggle-btn" onclick="toggleSidebar()" title="点击展开/收起侧边栏"></i>
-                <div class="logo">AI Nova</div>
-            </div>
+            <div class="header-left"><i class="fas fa-bars toggle-btn" onclick="toggleSidebar()" title="点击展开/收起侧边栏"></i><div class="logo">AI Nova</div></div>
             <div class="header-actions">
-                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置用户专属档案">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-                <div class="icon-btn-wrapper" onclick="openModal('settings-modal')" title="输入授权码">
-                    <i class="fas fa-key"></i>
-                </div>
+                <div class="icon-btn-wrapper" onclick="openModal('profile-modal')" title="设置用户专属档案"><i class="fas fa-user-circle"></i></div>
+                <div class="icon-btn-wrapper" onclick="openModal('settings-modal')" title="输入授权码"><i class="fas fa-key"></i></div>
             </div>
         </div>
 
-        <!-- 对话展示区 -->
         <div class="chat-area" id="chat-box">
-            <div class="welcome-hero" id="welcome-hero">
-                <h1>让 AI 创造更多可能</h1>
-                <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
-            </div>
+            <div class="welcome-hero" id="welcome-hero"><h1>让 AI 创造更多可能</h1><p>基于智能体网络，帮助您快速完成分析、解答与创作</p></div>
         </div>
 
-        <!-- 3. 底部固定/初始居中区：对话框 + 5模式切换 -->
         <div class="input-container">
             <div class="input-box-wrapper">
-                <textarea id="user_input" class="chat-input" rows="1" placeholder="发送消息给 AI Nova..." oninput="autoResize(this)"></textarea>
-                <div class="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </div>
+                <textarea id="user_input" class="chat-input" rows="1" placeholder="输入你想发的朋友圈主题或内容..." oninput="autoResize(this)"></textarea>
+                <div class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             </div>
-
+            
+            <!-- 💥 核心更新：匹配你 Dify 的 5 个新模式 💥 -->
             <div class="agent-modes">
-                <div class="mode-chip active" data-mode="supervisor" onclick="switchAgentMode('supervisor', this)">
-                    <i class="fas fa-user-graduate"></i> 个案督导
-                </div>
-                <div class="mode-chip" data-mode="simulation" onclick="switchAgentMode('simulation', this)">
-                    <i class="fas fa-theater-masks"></i> 咨询陪练
-                </div>
-                <div class="mode-chip" data-mode="business" onclick="switchAgentMode('business', this)">
-                    <i class="fas fa-chart-line"></i> 商业教练
-                </div>
-                <div class="mode-chip" data-mode="science" onclick="switchAgentMode('science', this)">
-                    <i class="fas fa-book-open"></i> 心理科普
-                </div>
-                <div class="mode-chip" data-mode="free" onclick="switchAgentMode('free', this)">
-                    <i class="fas fa-sparkles"></i> 自由创作
-                </div>
+                <div class="mode-chip active" data-mode="pyq" onclick="switchAgentMode('pyq', this)"><i class="fas fa-mobile-alt"></i> 发圈神器</div>
+                <div class="mode-chip" data-mode="deal" onclick="switchAgentMode('deal', this)"><i class="fas fa-handshake"></i> 走心成交</div>
+                <div class="mode-chip" data-mode="dudao" onclick="switchAgentMode('dudao', this)"><i class="fas fa-user-graduate"></i> 百万督导</div>
+                <div class="mode-chip" data-mode="rachel" onclick="switchAgentMode('rachel', this)"><i class="fas fa-brain"></i> 瑞秋大脑</div>
+                <div class="mode-chip" data-mode="video" onclick="switchAgentMode('video', this)"><i class="fas fa-video"></i> 视频文案</div>
             </div>
         </div>
     </div>
 
-    <!-- 4项精准用户档案 (知识库) 弹窗 -->
+    <!-- 用户档案弹窗 -->
     <div class="modal" id="profile-modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
-            <h3 style="margin-bottom: 5px;">👤 用户专属档案 (知识库)</h3>
+            <h3 style="margin-bottom: 5px;">👤 用户专属档案</h3>
             <p style="font-size: 12px; color: var(--text-sub);">完善您的背景信息（可选项），AI 将结合您的派系与定位提供更精准的回答。</p>
-            
             <div class="form-group">
                 <label>从业年限</label>
-                <input type="text" id="user_years" class="form-control" placeholder="例如：从业3年 / 心理学爱好者">
+                <select id="user_years" class="form-control">
+                    <option value="">请选择 (选填)</option>
+                    <option value="1年以下">1年以下 (新手)</option>
+                    <option value="1-3年">1-3年 (初级)</option>
+                    <option value="3-5年">3-5年 (中级)</option>
+                    <option value="5-10年">5-10年 (资深)</option>
+                    <option value="10年以上">10年以上 (专家)</option>
+                </select>
             </div>
-            <div class="form-group">
-                <label>你的技法（派系）</label>
-                <input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 拉康派">
-            </div>
-            <div class="form-group">
-                <label>定位（人群 * 问题）</label>
-                <input type="text" id="user_positioning" class="form-control" placeholder="例如：青少年情绪问题 / 职场焦虑排解">
-            </div>
-            <div class="form-group">
-                <label>其他补充说明</label>
-                <textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨，多结合实际干预建议..."></textarea>
-            </div>
+            <div class="form-group"><label>你的技法（派系）</label><input type="text" id="user_school" class="form-control" placeholder="例如：精神分析 / CBT / 拉康派"></div>
+            <div class="form-group"><label>定位（人群 * 问题）</label><input type="text" id="user_positioning" class="form-control" placeholder="例如：青少年情绪问题 / 职场焦虑排解"></div>
+            <div class="form-group"><label>其他补充说明</label><textarea id="user_notes" class="form-control" rows="2" placeholder="例如：希望回答风格更严谨..."></textarea></div>
             <button class="btn-submit" onclick="saveUserProfile()">保存档案</button>
         </div>
     </div>
@@ -744,11 +169,7 @@
             <span class="close-modal" onclick="closeModal('settings-modal')">&times;</span>
             <h3 style="margin-bottom: 5px;">🔑 身份授权</h3>
             <p style="font-size: 13px; color: var(--text-sub);">请输入您的 VIP 授权码以解锁所有 AI 服务</p>
-            <div class="form-group">
-                <label>授权码 (Auth Code)</label>
-                <input type="text" id="auth_code" class="form-control" placeholder="请输入您的授权码">
-                <div class="auth-tip" id="auth-tip">⚠️ 请先输入有效的授权码才能继续使用！</div>
-            </div>
+            <div class="form-group"><label>授权码 (Auth Code)</label><input type="text" id="auth_code" class="form-control" placeholder="请输入您的授权码"><div class="auth-tip" id="auth-tip">⚠️ 请先输入有效的授权码才能继续使用！</div></div>
             <button class="btn-submit" onclick="saveConfig()">保存并体验</button>
         </div>
     </div>
@@ -758,252 +179,116 @@
         <div class="modal-content" style="max-width: 460px;">
             <span class="close-modal" onclick="closeModal('privacy-modal')">&times;</span>
             <h3 style="margin-bottom: 5px; font-size: 18px;">📋 服务与隐私协议</h3>
-            <p style="font-size: 12px; color: var(--text-sub);">请仔细阅读并同意以下条款以开始体验服务：</p>
-            
             <div class="privacy-body">
-                <p><strong>1. 数据安全与隐私保护：</strong></p>
-                <p>本系统尊重并保护您的个人隐私。您填写的 VIP 授权码以及个人档案信息均仅保存在您的本地浏览器中，绝不会未经许可泄漏给第三方。</p>
-                <br>
-                <p><strong>2. AI 内容生成免责声明：</strong></p>
-                <p>本服务基于大语言模型构建，AI 提供的回答与案例分析仅供学习参考与辅助创作，不构成医疗临床诊断、法律或财务投资依据。</p>
-                <br>
-                <p><strong>3. 合规使用规范：</strong></p>
-                <p>严禁利用本工具传输或生成任何违反法律法规、危害国家安全或侵犯他人合法权益的内容。</p>
+                <p><strong>1. 数据安全与隐私保护：</strong></p><p>本系统尊重并保护您的个人隐私。您填写的 VIP 授权码以及个人档案信息均仅保存在您的本地浏览器中，绝不会未经许可泄漏给第三方。</p><br>
+                <p><strong>2. AI 内容生成免责声明：</strong></p><p>本服务基于大语言模型构建，AI 提供的回答与案例分析仅供学习参考与辅助创作，不构成医疗临床诊断、法律或财务投资依据。</p><br>
+                <p><strong>3. 合规使用规范：</strong></p><p>严禁利用本工具传输或生成任何违反法律法规、危害国家安全或侵犯他人合法权益的内容。</p>
             </div>
-
             <button class="btn-submit" onclick="agreePrivacy()">同意并继续</button>
         </div>
     </div>
 
-    <!-- JavaScript 核心逻辑 -->
     <script>
         const CONFIG = {
-            WORKER_URL: 'https://rachel.xiwangzfb.workers.dev', // Dify Worker / Agency Proxy 接口
-            AI_AVATAR: './avatar.png',               // GitHub 头像相对路径
-            USER_AVATAR: './user.png',
-            
-            SHOW_ICP: true,               // 【开关1】显示/隐藏 ICP 备案号
-            ENABLE_PRIVACY_MODAL: true    // 【开关2】开启/关闭 首次登录隐私协议弹窗
+            WORKER_URL: 'https://rachel.xiwangzfb.workers.dev', 
+            AI_AVATAR: 'https://api.dicebear.com/7.x/bottts/svg?seed=Nova',               
+            USER_AVATAR: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rachel',
+            ENABLE_PRIVACY_MODAL: true    
         };
 
-        const THEMES = ['light', 'dusk', 'dark']; // 三种主题列表
-
+        const THEMES = ['light', 'dusk', 'dark']; 
         let currentConvId = "";
-        let currentMode = "supervisor";
+        let currentMode = "pyq"; // 默认模式改为 pyq (发圈神器)
         let chatList = JSON.parse(localStorage.getItem('nova_chat_list')) || [];
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadConfig();
-            loadUserProfile();
-            renderHistory();
-            initTheme();
-            checkPrivacyPolicy();
-
+            loadConfig(); loadUserProfile(); renderHistory(); initTheme(); checkPrivacyPolicy();
             document.getElementById('user_input').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
-                    e.preventDefault();
-                    sendMessage();
-                }
+                if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) { e.preventDefault(); sendMessage(); }
             });
         });
 
-        /* --- 三色系主题 (白天 / 黄昏 / 夜间) 循环切换逻辑 --- */
-        function initTheme() {
-            const savedTheme = localStorage.getItem('nova_theme') || 'light';
-            setTheme(savedTheme);
-        }
-
-        function cycleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const currentIndex = THEMES.indexOf(currentTheme);
-            const nextTheme = THEMES[(currentIndex + 1) % THEMES.length];
-            setTheme(nextTheme);
-        }
-
+        function initTheme() { setTheme(localStorage.getItem('nova_theme') || 'light'); }
+        function cycleTheme() { setTheme(THEMES[(THEMES.indexOf(document.documentElement.getAttribute('data-theme') || 'light') + 1) % THEMES.length]); }
         function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('nova_theme', theme);
-
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-
-            if (theme === 'light') {
-                icon.className = 'fas fa-sun';
-                text.innerText = '白天模式';
-            } else if (theme === 'dusk') {
-                icon.className = 'fas fa-cloud-sun';
-                text.innerText = '黄昏模式';
-            } else if (theme === 'dark') {
-                icon.className = 'fas fa-moon';
-                text.innerText = '夜间模式';
-            }
+            document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('nova_theme', theme);
+            const icon = document.getElementById('theme-icon'), text = document.getElementById('theme-text');
+            if (theme === 'light') { icon.className = 'fas fa-sun'; text.innerText = '白天模式'; } 
+            else if (theme === 'dusk') { icon.className = 'fas fa-cloud-sun'; text.innerText = '黄昏模式'; } 
+            else if (theme === 'dark') { icon.className = 'fas fa-moon'; text.innerText = '夜间模式'; }
         }
 
-        /* --- 隐私协议与 ICP 备案检测逻辑 --- */
-        function checkPrivacyPolicy() {
-            // 控制 ICP 备案号显示
-            const icpEl = document.getElementById('icp-info');
-            if (icpEl) {
-                icpEl.style.display = CONFIG.SHOW_ICP ? 'block' : 'none';
-            }
+        function checkPrivacyPolicy() { if (CONFIG.ENABLE_PRIVACY_MODAL && !localStorage.getItem('nova_privacy_agreed')) openModal('privacy-modal'); }
+        function agreePrivacy() { localStorage.setItem('nova_privacy_agreed', 'true'); closeModal('privacy-modal'); }
 
-            // 控制初次登录隐私协议弹窗
-            if (CONFIG.ENABLE_PRIVACY_MODAL) {
-                const agreed = localStorage.getItem('nova_privacy_agreed');
-                if (!agreed) {
-                    openModal('privacy-modal');
-                }
-            }
-        }
-
-        function agreePrivacy() {
-            localStorage.setItem('nova_privacy_agreed', 'true');
-            closeModal('privacy-modal');
-        }
-
-        /* --- 保存与读取 4 项精准用户档案 (透传至 Dify) --- */
         function saveUserProfile() {
-            const profile = {
-                years: document.getElementById('user_years').value.trim(),
-                school: document.getElementById('user_school').value.trim(),
-                positioning: document.getElementById('user_positioning').value.trim(),
-                notes: document.getElementById('user_notes').value.trim()
-            };
-            localStorage.setItem('nova_user_profile', JSON.stringify(profile));
-            closeModal('profile-modal');
-            alert("档案保存成功！后续回答将自动结合您的专业定位。");
+            const profile = { years: document.getElementById('user_years').value, school: document.getElementById('user_school').value.trim(), positioning: document.getElementById('user_positioning').value.trim(), notes: document.getElementById('user_notes').value.trim() };
+            localStorage.setItem('nova_user_profile', JSON.stringify(profile)); closeModal('profile-modal'); alert("档案保存成功！后续回答将自动结合您的专业定位。");
         }
 
         function loadUserProfile() {
             const profile = JSON.parse(localStorage.getItem('nova_user_profile'));
-            if (profile) {
-                document.getElementById('user_years').value = profile.years || '';
-                document.getElementById('user_school').value = profile.school || '';
-                document.getElementById('user_positioning').value = profile.positioning || '';
-                document.getElementById('user_notes').value = profile.notes || '';
-            }
+            if (profile) { document.getElementById('user_years').value = profile.years || ''; document.getElementById('user_school').value = profile.school || ''; document.getElementById('user_positioning').value = profile.positioning || ''; document.getElementById('user_notes').value = profile.notes || ''; }
         }
 
-        /* --- 侧边栏与历史记录管理 --- */
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('show');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('overlay').classList.remove('show');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
 
         function renderHistory() {
-            const listEl = document.getElementById('history-list');
-            listEl.innerHTML = chatList.map(item => `
-                <div class="history-item ${item.id === currentConvId ? 'active' : ''}" onclick="loadChat('${item.id}')">
-                    <span class="history-title">${item.title}</span>
-                    <div class="history-actions">
-                        <i class="fas fa-trash" onclick="deleteChat('${item.id}', event)"></i>
-                    </div>
-                </div>
-            `).join('');
+            document.getElementById('history-list').innerHTML = chatList.map(item => `<div class="history-item ${item.id === currentConvId ? 'active' : ''}" onclick="loadChat('${item.id}')"><span class="history-title">${item.title}</span><div class="history-actions"><i class="fas fa-trash" onclick="deleteChat('${item.id}', event)"></i></div></div>`).join('');
         }
 
         function startNewChat() {
-            currentConvId = "";
-            const mainContainer = document.getElementById('main-container');
-            mainContainer.classList.add('welcome-state');
-
-            document.getElementById('chat-box').innerHTML = `
-                <div class="welcome-hero" id="welcome-hero">
-                    <h1>让 AI 创造更多可能</h1>
-                    <p>基于智能体网络，帮助您快速完成分析、解答与创作</p>
-                </div>`;
-            closeSidebar();
-            renderHistory();
+            currentConvId = ""; document.getElementById('main-container').classList.add('welcome-state');
+            document.getElementById('chat-box').innerHTML = `<div class="welcome-hero" id="welcome-hero"><h1>让 AI 创造更多可能</h1><p>基于智能体网络，帮助您快速完成分析、解答与创作</p></div>`;
+            closeSidebar(); renderHistory();
         }
 
         function loadChat(id) {
-            currentConvId = id;
-            closeSidebar();
-            
-            document.getElementById('main-container').classList.remove('welcome-state');
-
+            currentConvId = id; closeSidebar(); document.getElementById('main-container').classList.remove('welcome-state');
             const msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
-            const box = document.getElementById('chat-box');
-            box.innerHTML = '';
-            msgs.forEach(m => appendMessage(m.role, m.content));
-            scrollToBottom();
-            renderHistory();
+            const box = document.getElementById('chat-box'); box.innerHTML = '';
+            msgs.forEach(m => appendMessage(m.role, m.content)); scrollToBottom(); renderHistory();
         }
 
         function saveMsg(id, role, content) {
-            let msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || [];
-            msgs.push({ role, content });
-            localStorage.setItem(`nova_msg_${id}`, JSON.stringify(msgs));
+            let msgs = JSON.parse(localStorage.getItem(`nova_msg_${id}`)) || []; msgs.push({ role, content }); localStorage.setItem(`nova_msg_${id}`, JSON.stringify(msgs));
         }
 
         function updateChatList(id, firstMsg) {
             const title = firstMsg.substring(0, 12) + "...";
-            if (!chatList.find(c => c.id === id)) {
-                chatList.unshift({ id, title });
-                localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
-                renderHistory();
-            }
+            if (!chatList.find(c => c.id === id)) { chatList.unshift({ id, title }); localStorage.setItem('nova_chat_list', JSON.stringify(chatList)); renderHistory(); }
         }
 
         function deleteChat(id, e) {
-            e.stopPropagation();
-            if (!confirm("确认删除此记录？")) return;
-            chatList = chatList.filter(c => c.id !== id);
-            localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
-            localStorage.removeItem(`nova_msg_${id}`);
-            renderHistory();
-            if (currentConvId === id) startNewChat();
+            e.stopPropagation(); if (!confirm("确认删除此记录？")) return;
+            chatList = chatList.filter(c => c.id !== id); localStorage.setItem('nova_chat_list', JSON.stringify(chatList));
+            localStorage.removeItem(`nova_msg_${id}`); renderHistory(); if (currentConvId === id) startNewChat();
         }
 
-        /* --- 5 种 Agent 模式切换 --- */
+        // 💥 更新：当点击不同模式时，输入框自动切换提示语
         function switchAgentMode(modeKey, el) {
-            currentMode = modeKey;
-            document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active'));
-            el.classList.add('active');
-            
-            const input = document.getElementById('user_input');
-            const placeholders = {
-                supervisor: '输入心理咨询案例或督导需求...',
-                simulation: '扮演来访者，请输入第一句话...',
-                business: '提出创业获客或变现问题...',
-                science: '检索心理学知识或概念...',
-                free: '发送消息给 AI Nova...'
+            currentMode = modeKey; document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active')); el.classList.add('active');
+            const placeholders = { 
+                pyq: '输入你想发的朋友圈主题或内容...', 
+                deal: '输入客户异议或你想沟通的成交场景...', 
+                dudao: '输入心理咨询案例或督导需求...', 
+                rachel: '向瑞秋的 AI 大脑提问...', 
+                video: '输入视频主题或你想表达的核心观点...' 
             };
-            input.placeholder = placeholders[modeKey] || '发送消息...';
+            document.getElementById('user_input').placeholder = placeholders[modeKey] || '发送消息...';
         }
 
-        /* --- 发送逻辑：自动对接 Dify --- */
         async function sendMessage() {
-            const input = document.getElementById('user_input');
-            const text = input.value.trim();
-            if (!text) return;
-
+            const input = document.getElementById('user_input'); const text = input.value.trim(); if (!text) return;
             const auth = localStorage.getItem('nova_auth');
-            if (!auth) {
-                document.getElementById('auth-tip').style.display = 'block';
-                openModal('settings-modal');
-                return;
-            }
+            if (!auth) { document.getElementById('auth-tip').style.display = 'block'; openModal('settings-modal'); return; }
 
-            input.blur();
-            input.value = '';
-            input.style.height = 'auto';
-
+            input.blur(); input.value = ''; input.style.height = 'auto';
             const mainContainer = document.getElementById('main-container');
-            if (mainContainer.classList.contains('welcome-state')) {
-                mainContainer.classList.remove('welcome-state');
-                const hero = document.getElementById('welcome-hero');
-                if (hero) hero.remove();
-            }
+            if (mainContainer.classList.contains('welcome-state')) { mainContainer.classList.remove('welcome-state'); const hero = document.getElementById('welcome-hero'); if (hero) hero.remove(); }
 
-            appendMessage('user', text);
-            scrollToBottom();
-
+            appendMessage('user', text); scrollToBottom();
             const userProfile = JSON.parse(localStorage.getItem('nova_user_profile')) || {};
             const loadingId = appendThinking();
 
@@ -1023,116 +308,48 @@
                     "user": "user_" + auth.substring(0, 6)
                 };
 
-                const response = await fetch(CONFIG.WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
+                const response = await fetch(CONFIG.WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 removeThinking(loadingId);
-
                 if (!response.ok) throw new Error("接口响应失败");
 
                 const data = await response.json();
                 const aiReply = data.answer || "已收到，但模型未给出有效答复。";
 
-                appendMessage('ai', aiReply);
-                scrollToBottom();
-
-                if (data.conversation_id) {
-                    const isNew = !currentConvId;
-                    currentConvId = data.conversation_id;
-                    if (isNew) {
-                        updateChatList(currentConvId, text);
-                    }
-                }
-                
-                saveMsg(currentConvId, 'user', text);
-                saveMsg(currentConvId, 'ai', aiReply);
+                appendMessage('ai', aiReply); scrollToBottom();
+                if (data.conversation_id) { const isNew = !currentConvId; currentConvId = data.conversation_id; if (isNew) updateChatList(currentConvId, text); }
+                saveMsg(currentConvId, 'user', text); saveMsg(currentConvId, 'ai', aiReply);
 
             } catch (err) {
-                removeThinking(loadingId);
-                appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或网络状态)`);
-                scrollToBottom();
+                removeThinking(loadingId); appendMessage('ai', `❌ 错误: ${err.message} (请检查授权码或网络状态)`); scrollToBottom();
             }
         }
 
         function appendMessage(role, text) {
-            const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = `message ${role}`;
-
+            const box = document.getElementById('chat-box'); const div = document.createElement('div'); div.className = `message ${role}`;
             const avatarUrl = role === 'ai' ? CONFIG.AI_AVATAR : CONFIG.USER_AVATAR;
-            const avatarHtml = `<div class="avatar" style="background-image: url('${avatarUrl}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>`;
-
-            div.innerHTML = `
-                ${avatarHtml}
-                <div class="bubble-content">
-                    <div class="bubble">${marked.parse(text)}</div>
-                </div>`;
-
+            div.innerHTML = `<div class="avatar" style="background-image: url('${avatarUrl}');"></div><div class="bubble-content"><div class="bubble">${marked.parse(text)}</div></div>`;
             box.appendChild(div);
         }
 
         function appendThinking() {
-            const id = 'think_' + Date.now();
-            const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = 'message ai';
-            div.innerHTML = `
-                <div class="avatar" style="background-image: url('${CONFIG.AI_AVATAR}'), url('https://cdn-icons-png.flaticon.com/512/4712/4712035.png');"></div>
-                <div class="bubble"><i class="fas fa-spinner fa-spin"></i> 思考中...</div>`;
-            box.appendChild(div);
-            scrollToBottom();
-            return id;
+            const id = 'think_' + Date.now(); const box = document.getElementById('chat-box'); const div = document.createElement('div'); div.id = id; div.className = 'message ai';
+            div.innerHTML = `<div class="avatar" style="background-image: url('${CONFIG.AI_AVATAR}');"></div><div class="bubble"><i class="fas fa-spinner fa-spin"></i> 思考中...</div>`;
+            box.appendChild(div); scrollToBottom(); return id;
         }
 
-        function removeThinking(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        }
-
-        function scrollToBottom() {
-            const box = document.getElementById('chat-box');
-            box.scrollTo({
-                top: box.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
-
-        function autoResize(el) {
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
-        }
-
-        /* --- 弹窗控制逻辑 --- */
+        function removeThinking(id) { const el = document.getElementById(id); if (el) el.remove(); }
+        function scrollToBottom() { const box = document.getElementById('chat-box'); box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }); }
+        function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function saveConfig() {
             const auth = document.getElementById('auth_code').value.trim();
-            if (!auth) {
-                document.getElementById('auth-tip').style.display = 'block';
-                return;
-            }
-            localStorage.setItem('nova_auth', auth);
-            document.getElementById('auth-tip').style.display = 'none';
-            closeModal('settings-modal');
+            if (!auth) { document.getElementById('auth-tip').style.display = 'block'; return; }
+            localStorage.setItem('nova_auth', auth); document.getElementById('auth-tip').style.display = 'none'; closeModal('settings-modal');
         }
-
-        function loadConfig() {
-            const auth = localStorage.getItem('nova_auth');
-            if (auth) document.getElementById('auth_code').value = auth;
-        }
-
-        function clearAllCache() {
-            if (confirm("确定要清空本地所有聊天记录、配置与授权记录？")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
+        function loadConfig() { const auth = localStorage.getItem('nova_auth'); if (auth) document.getElementById('auth_code').value = auth; }
+        function clearAllCache() { if (confirm("确定要清空本地所有聊天记录、配置与授权记录？")) { localStorage.clear(); location.reload(); } }
     </script>
 </body>
-
 </html>
