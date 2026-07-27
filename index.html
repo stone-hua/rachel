@@ -128,15 +128,14 @@
                 <div class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             </div>
             
-            <!-- 💥 核心更新：匹配你 Dify 的 5 个新模式 💥 -->
+         <!-- 💥 核心更新：匹配 Dify 要求的中文模式名称 💥 -->
             <div class="agent-modes">
-                <div class="mode-chip active" data-mode="pyq" onclick="switchAgentMode('pyq', this)"><i class="fas fa-mobile-alt"></i> 发圈神器</div>
-                <div class="mode-chip" data-mode="deal" onclick="switchAgentMode('deal', this)"><i class="fas fa-handshake"></i> 走心成交</div>
-                <div class="mode-chip" data-mode="dudao" onclick="switchAgentMode('dudao', this)"><i class="fas fa-user-graduate"></i> 百万督导</div>
-                <div class="mode-chip" data-mode="rachel" onclick="switchAgentMode('rachel', this)"><i class="fas fa-brain"></i> 瑞秋大脑</div>
-                <div class="mode-chip" data-mode="video" onclick="switchAgentMode('video', this)"><i class="fas fa-video"></i> 视频文案</div>
+                <div class="mode-chip active" data-mode="朋友圈文案" onclick="switchAgentMode('朋友圈文案', this)"><i class="fas fa-mobile-alt"></i> 发圈神器</div>
+                <div class="mode-chip" data-mode="成交谈单" onclick="switchAgentMode('成交谈单', this)"><i class="fas fa-handshake"></i> 走心成交</div>
+                <div class="mode-chip" data-mode="百万督导" onclick="switchAgentMode('百万督导', this)"><i class="fas fa-user-graduate"></i> 百万督导</div>
+                <div class="mode-chip" data-mode="瑞秋大脑" onclick="switchAgentMode('瑞秋大脑', this)"><i class="fas fa-brain"></i> 瑞秋大脑</div>
+                <div class="mode-chip" data-mode="短视频文案" onclick="switchAgentMode('短视频文案', this)"><i class="fas fa-video"></i> 视频文案</div>
             </div>
-        </div>
     </div>
 
     <!-- 用户档案弹窗 -->
@@ -266,15 +265,22 @@
             localStorage.removeItem(`nova_msg_${id}`); renderHistory(); if (currentConvId === id) startNewChat();
         }
 
-        // 💥 更新：当点击不同模式时，输入框自动切换提示语
+        let currentMode = "朋友圈文案"; // 默认模式改为 朋友圈文案
+        let chatList = JSON.parse(localStorage.getItem('nova_chat_list')) || [];
+
+        // ... (保留你原来的 DOMContentLoaded 等代码) ...
+
+        // 💥 更新：当点击不同模式时，把中文暗号传给系统，并切换提示语
         function switchAgentMode(modeKey, el) {
-            currentMode = modeKey; document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active')); el.classList.add('active');
+            currentMode = modeKey; 
+            document.querySelectorAll('.mode-chip').forEach(chip => chip.classList.remove('active')); 
+            el.classList.add('active');
             const placeholders = { 
-                pyq: '输入你想发的朋友圈主题或内容...', 
-                deal: '输入客户异议或你想沟通的成交场景...', 
-                dudao: '输入心理咨询案例或督导需求...', 
-                rachel: '向瑞秋的 AI 大脑提问...', 
-                video: '输入视频主题或你想表达的核心观点...' 
+                '朋友圈文案': '输入你想发的朋友圈主题或内容...', 
+                '成交谈单': '输入客户异议或你想沟通的成交场景...', 
+                '百万督导': '输入心理咨询案例或督导需求...', 
+                '瑞秋大脑': '向瑞秋的 AI 大脑提问...', 
+                '短视频文案': '输入视频主题或你想表达的核心观点...' 
             };
             document.getElementById('user_input').placeholder = placeholders[modeKey] || '发送消息...';
         }
